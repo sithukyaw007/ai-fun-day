@@ -1,0 +1,42 @@
+{
+  "name": "jtc-ai-playground",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && node scripts/build-release.mjs",
+    "typecheck": "tsc -b",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "deploy": "gh-pages -d dist"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "lucide-react": "^0.468.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@parcel/config-default": "^2.16.0",
+    "@playwright/test": "^1.56.1",
+    "@axe-core/playwright": "^4.10.2",
+    "@types/qrcode": "^1.5.5",
+    "gh-pages": "^6.3.0",
+    "html-inline": "^1.2.0",
+    "jsqr": "^1.4.0",
+    "oxlint": "^1.88.0",
+    "parcel": "^2.16.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^4.0.0"
+  },
+  "engines": { "node": ">=22" },
+  "browserslist": ["last 2 Chrome versions", "last 2 Edge versions", "last 2 Safari versions", "last 2 Firefox versions"]
+}
