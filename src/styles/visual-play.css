@@ -166,6 +166,30 @@
 .reaction-rules svg { color: var(--cp-accent); }
 .round-explanation details { margin-bottom: 18px; font-size: 12px; color: var(--cp-text-soft); }
 .round-explanation details p { margin-top: 12px; }
+.drift-game .sensor-panel { scroll-margin-top: 12px; }
+.drift-game .sensor-panel:focus { outline: none; }
+.drift-game .chart-label { font-size: 14px; }
+.drift-game .alarm-button { width: 100%; max-width: 680px; min-width: 0; min-height: 104px; padding: 18px 24px; gap: 20px; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.drift-game .alarm-button > svg { width: 34px; }
+.drift-game .alarm-button > svg:last-child { width: 28px; }
+.drift-game .alarm-button > .alarm-pad-label { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; margin: 0; text-align: left; }
+.alarm-pad-label small { font-size: 13px; font-weight: 400; }
+.alarm-pad-label strong { font-size: 26px; font-weight: 600; line-height: 1.25; }
+.drift-game .alarm-button:active { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); transform: none; }
+.drift-game .keyboard-alternative { display: flex; justify-content: center; align-items: center; gap: 7px; color: var(--cp-text-soft); font-size: 10px; margin: 8px 0 0; }
+.drift-game .keyboard-alternative kbd { font-size: 9px; }
+.drift-game .sensor-choice, .drift-game .drift-instructions > .button,
+.drift-game .round-explanation > .button { min-height: 56px; }
+@media (min-width: 600px) and (max-height: 900px) {
+  .drift-game[data-phase="playing"] .sensor-panel { padding: 20px 24px; }
+  .drift-game[data-phase="playing"] .live-sensor-visual { grid-template-columns: 150px minmax(0, 1fr); gap: 16px; margin: 8px 0; }
+  .drift-game[data-phase="playing"] .sensor-chart { max-height: 34svh; min-height: 200px; margin: 4px 0; }
+  .drift-game[data-phase="playing"] .chart-label { font-size: 16px; }
+  .drift-game[data-phase="playing"] .sensor-top h2 { font-size: 21px; margin-top: 6px; }
+  .drift-game[data-phase="playing"] .chart-legend { margin-top: 16px; }
+  .drift-game[data-phase="playing"] .alarm-controls { padding-top: 12px; }
+  .drift-game .alarm-controls p { margin-top: 10px; }
+}
 html[data-theme="dark"] .checkin-guest, html[data-theme="dark"] .variant-filter button,
 html[data-theme="dark"] .board-rules, html[data-theme="dark"] .quiz-feedback details { color: var(--cp-text-soft); }
 html[data-theme="dark"] .variant-filter button.selected { color: var(--cp-text); }
@@ -205,6 +229,11 @@ html[data-theme="dark"] .game-scene text { fill: var(--cp-text-soft); }
   .visual-evidence-map, .visual-evidence-bids { grid-template-columns: 1fr; }
 }
 @media (max-width: 540px) {
+  .drift-game .alarm-button { min-height: 104px; padding: 18px 14px; gap: 12px; }
+  .drift-game .alarm-button > svg { width: 28px; }
+  .drift-game .alarm-button > svg:last-child { width: 22px; }
+  .alarm-pad-label small { font-size: 11px; }
+  .alarm-pad-label strong { font-size: 23px; }
   .shared-status { margin: 12px 18px 0; flex-wrap: wrap; }
   .shared-status > button { margin-left: 24px; }
   .player-session-button { font-size: 10px; padding: 6px 9px; gap: 6px; }

@@ -19,7 +19,7 @@ Four browser games for the Microsoft booth at JTC AI & Analytics Day. Fictional 
 | Game | How to play | What it demonstrates |
 | --- | --- | --- |
 | **Beat the Agent** | Solve one of four estate cases in 60 seconds. Select the answer and cite supporting rows from an in-app messy folder. | Correct, sourced answers beat fast guesses. Prepared references are explicitly not live AI. |
-| **Spot the Drift** | Press space or tap the alarm after a sustained threshold crossing. Ignore single spikes. Some rounds stay healthy: wait for all-clear. | Compare your decision with a disclosed three-consecutive-sample detector, not a live AI or building connection. |
+| **Spot the Drift** | Tap the large on-screen alarm pad with a finger after a sustained threshold crossing. No keyboard needed; space is optional. Ignore single spikes. Healthy rounds reward waiting for all-clear. | Compare your decision with a disclosed three-consecutive-sample detector, not a live AI or building connection. |
 | **AI or Aiyoh?** | Judge eight AI/data claims. Play on a phone through the quiz QR and show the result to the host. | Sources, permissions, data freshness, consent, and human oversight. |
 | **Singlish to Boardroom** | Pick, type, or optionally say a phrase. Choose the professional rewrite that keeps its meaning. | Useful drafting does not invent facts, promises, approvals, or completed work. |
 
@@ -60,6 +60,14 @@ node scripts/serve-release.mjs
 4. Close with: **"The officer decides. Copilot did the legwork."**
 
 Use the in-app **Host guide & privacy** page for operation and reset instructions. Start a new round between visitors; changing game cancels an unfinished attempt. A hidden tab cancels an active drift round without saving a score.
+
+### Surface Go / touchscreen play
+
+Open **Spot the Drift** in Edge or Chrome on the Surface Go. Choose the sensor and tap **Watch the sensor**. After nickname check-in and the skippable guide, the page brings the sensor chart and a full-width, finger-friendly **Raise the alarm** pad into view.
+
+Tap the pad with one finger when you spot sustained drift. No touch bar, trackpad or keyboard is required. Mouse clicks, pen taps and the optional spacebar shortcut still use the same scoring path. The chart itself does not raise an alarm, so a touch or scroll outside the pad is not counted as a reaction. Native tap/click activation and the single-finish guard prevent a single gesture from recording multiple scores. Healthy rounds still require waiting without tapping.
+
+The tablet layout keeps the chart and pad together in landscape and portrait. OS display scaling and browser controls affect available space; use landscape or hide browser chrome if the screen feels cramped.
 
 ### Player check-in and visual play
 

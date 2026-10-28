@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Activity, ArrowRight, BellRing, Keyboard, RotateCcw } from 'lucide-react'
+import { Activity, ArrowRight, BellRing, Hand, Keyboard, RotateCcw } from 'lucide-react'
 import { GameHeading, PersonaNote, ResultBadge, Tag } from '../components/Common'
 import SensorChart from '../components/SensorChart'
 import GameScene from '../components/GameScene'
@@ -21,8 +21,15 @@ export default function SpotDrift({ onResult, onActive, onStart }: GameProps) {
   const finished = useRef(false)
   const rounds = useRef(0)
   const attempt = useRef('')
+  const sensorPanel = useRef<HTMLDivElement>(null)
   const sensor = sensors.find((item) => item.id === sensorId)!
   useRoundActivity(onActive, phase === 'playing')
+
+  useEffect(() => {
+    if (phase !== 'playing') return
+    sensorPanel.current?.focus({ preventScroll: true })
+    sensorPanel.current?.scrollIntoView({ block: 'start' })
+  }, [phase])
 
   const finish = useCallback((at: number | null) => {
     if (finished.current || phase !== 'playing') return
@@ -89,15 +96,15 @@ export default function SpotDrift({ onResult, onActive, onStart }: GameProps) {
   }
   const lastSample = round.samples[Math.min(Math.floor(elapsed), round.samples.length - 1)]!
 
-  return <section aria-label="Spot the Drift">
+  return <section className="drift-game" data-phase={phase} aria-label="Spot the Drift">
     <GameHeading number="02" title="Spot the Drift" description="A blip, or the beginning of a bad day?">
-      <Tag><Activity size={14} />Synthetic sensors. Real instincts.</Tag>
+      <Tag><Hand size={14} />Touchscreen ready. No keyboard needed.</Tag>
     </GameHeading>
     {notice && <p className="notice" role="status">{notice}</p>}
     {phase === 'ready' ? <div className="drift-intro">
       <div className="panel drift-instructions"><div className="eyebrow">CHLOE'S EARLY-WARNING CHALLENGE</div><h2>Catch it before<br /><span>the tenant calls.</span></h2>
-        <p>Spot a sustained rise above the alert line. Tap the alarm or press <kbd>space</kbd>.</p>
-        <div className="reaction-rules"><span><Activity size={21} />Watch the trend</span><span><BellRing size={21} />Ignore lone spikes</span><span><Keyboard size={21} />Tap when it drifts</span></div>
+        <p>Watch for a sustained rise above the alert line. Tap the large alarm pad with your finger when it drifts. No keyboard needed.</p>
+        <div className="reaction-rules"><span><Activity size={21} />Watch the trend</span><span><BellRing size={21} />Ignore lone spikes</span><span><Hand size={21} />Tap the alarm pad</span></div>
         <div className="sensor-choices">{sensors.map((item) => <button key={item.id} className={`sensor-choice${sensorId === item.id ? ' selected' : ''}`} onClick={() => setSensorId(item.id)} aria-pressed={sensorId === item.id}><Activity size={19} /><span><strong>{item.id === 'chiller' ? 'Chiller CH-2' : 'Meeting Room 7'}</strong><small>{item.id === 'chiller' ? 'Approach temperature' : 'CO2 level'}</small></span><span className="selection-dot" /></button>)}</div>
         <button className="button button-primary" onClick={() => onStart(start)}>Watch the sensor<ArrowRight size={18} /></button>
         <p className="helper">24-second rounds. Some rounds stay healthy: wait to earn an all-clear. No actual building systems are connected.</p>
@@ -110,12 +117,18 @@ export default function SpotDrift({ onResult, onActive, onStart }: GameProps) {
           : result.outcome === 'missed' ? 'A sustained drift occurred, but no alert was raised before the round ended.'
           : `Your alert: ${pressedAt!.toFixed(1)}s. ${round.detectorAt !== null ? `Simulated detector: ${round.detectorAt.toFixed(1)}s.` : 'The detector did not alert.'}`}</p>
       </ResultBadge>}
-      <div className="sensor-panel panel">
+      <div className="sensor-panel panel" ref={sensorPanel} tabIndex={-1} role="region" aria-label="Sensor chart and alarm controls">
         <div className="sensor-top"><div><div className="eyebrow">SYNTHETIC TELEMETRY / {phase === 'done' ? 'ROUND REPLAY' : 'WATCHING'}</div><h2>{round.sensor.title}</h2></div>
           <div className="sensor-reading"><strong>{lastSample.value}</strong><span>{round.sensor.unit}</span></div></div>
         <div className="chart-legend"><span><i className="line-key" />Sensor</span><span><i className="line-key threshold-key" />Alert {round.sensor.threshold} {round.sensor.unit}</span><span><i className="line-key impact-key" />Fictional impact {round.sensor.impact} {round.sensor.unit}</span><span>{Math.floor(elapsed)} / {round.duration}s</span></div>
         <div className="live-sensor-visual"><div className="sensor-illustration"><GameScene scene={round.sensor.id} /><span>{round.sensor.id === 'chiller' ? 'COOLING PLANT' : 'MEETING ROOM 7'}</span><div className="sensor-value-track"><span style={{ transform: `scaleX(${Math.min(1, Math.max(0, (lastSample.value - round.sensor.min) / (round.sensor.max - round.sensor.min)))})` }} /></div></div><SensorChart round={round} elapsed={elapsed} revealed={phase === 'done'} pressedAt={pressedAt} /></div>
-        {phase === 'playing' ? <div className="alarm-controls"><button className="button button-primary alarm-button" onClick={raiseAlarm}><BellRing size={23} />Raise the alarm<span><Keyboard size={16} /><kbd>space</kbd></span></button><p className="helper">React to a sustained rise, not a single spike. Healthy all the way? Wait until the round ends.</p></div>
+        {phase === 'playing' ? <div className="alarm-controls">
+          <button type="button" className="button button-primary alarm-button" aria-label="Raise the alarm" aria-describedby="drift-touch-help" onClick={raiseAlarm}>
+            <Hand size={34} aria-hidden="true" /><span className="alarm-pad-label"><small>Tap here with your finger</small><strong>Raise the alarm</strong></span><BellRing size={28} aria-hidden="true" />
+          </button>
+          <p className="helper" id="drift-touch-help">Tap the pad above—not the chart. One tap is enough. Healthy all the way? Wait for the round to end.</p>
+          <p className="keyboard-alternative"><Keyboard size={14} aria-hidden="true" />Optional keyboard shortcut: <kbd>space</kbd></p>
+        </div>
           : <div className="round-explanation"><details><summary>How the simulated detector works</summary><p>It alerts after three consecutive readings meet the threshold, using only samples seen so far. Not a live AI or Fabric connection. Thresholds are fictional game rules.</p></details><button className="button button-primary" onClick={() => onStart(start)}><RotateCcw size={17} />Another round</button><button className="button button-secondary" onClick={() => setPhase('ready')}>Change sensor</button></div>}
       </div>
     </>}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowRight, BellRing, BookmarkCheck, Check, CheckCheck, CircleHelp, Fan, FileSearch, Lightbulb, LockKeyhole, MessageSquareQuote, MousePointer2, Pause, Play, RotateCcw, ShieldCheck, UsersRound, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, BellRing, BookmarkCheck, Check, CheckCheck, CircleHelp, Fan, FileSearch, Hand, Lightbulb, LockKeyhole, MessageSquareQuote, MousePointer2, Pause, Play, RotateCcw, ShieldCheck, UsersRound, X } from 'lucide-react'
 import { gameGuides } from '../data/guides'
 import { gameNames } from '../types'
 import type { GameId } from '../types'
@@ -29,7 +29,7 @@ function PracticeDemo({ game, step }: { game: GameId; step: number }) {
           {step > 0 && <circle className="demo-catch" cx="335" cy="68" r="9" />}
         </svg>
       </div>
-      <div className={`demo-alarm${step === 2 ? ' demo-selected' : ''}`}><BellRing size={22} />{step === 2 ? 'Alarm raised. Nice catch!' : step === 1 ? 'Sustained rise - get ready' : 'One blip - keep watching'}<kbd>space</kbd></div>
+      <div className={`demo-alarm${step === 2 ? ' demo-selected' : ''}`}><Hand size={22} />{step === 2 ? 'Tapped! Alarm raised.' : step === 1 ? 'Get ready to tap the alarm pad' : 'One blip - keep watching'}<BellRing size={18} /></div>
     </>}
     {game === 'quiz' && <>
       <div className="demo-quiz-claim"><ShieldCheck size={39} /><strong>"Check an AI answer's sources."</strong></div>
@@ -42,7 +42,8 @@ function PracticeDemo({ game, step }: { game: GameId; step: number }) {
       <div className="demo-rewrite demo-unfaithful"><span className="demo-letter">B</span><span>The light has been repaired. All done!</span>{step === 2 && <X size={18} />}</div>
       <div className="demo-meaning-check">{step === 2 ? <><CheckCheck size={18} />Same facts. No made-up repair.</> : <><ArrowRight size={18} />Which version keeps the meaning?</>}</div>
     </>}
-    <MousePointer2 className={`demo-cursor demo-cursor-${game}`} size={28} fill="var(--cp-surface)" />
+    {game === 'drift' ? <Hand className="demo-cursor demo-cursor-drift" size={32} fill="var(--cp-surface)" />
+      : <MousePointer2 className={`demo-cursor demo-cursor-${game}`} size={28} fill="var(--cp-surface)" />}
   </div>
 }
 

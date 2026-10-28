@@ -19,7 +19,7 @@ export const gameGuides: Record<GameId, { hint: string; steps: GuideStep[] }> = 
     steps: [
       { title: 'A spike? Stay cool.', description: 'Watch the line. One short spike above the alert line is not a sustained drift.' },
       { title: 'Spot a sustained rise.', description: 'Look for readings that keep rising above the alert line. Do not wait for the tenant-impact line.' },
-      { title: 'Tap before the tenant calls.', description: 'Tap Raise the alarm or press space. Too early is a false alarm; a timely catch earns points.' },
+      { title: 'Tap before the tenant calls.', description: 'Use your finger to tap the large Raise the alarm pad, not the chart. No keyboard needed; space is an optional shortcut.' },
     ],
   },
   quiz: {
