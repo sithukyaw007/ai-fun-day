@@ -2,13 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Activity, ArrowRight, BellRing, Keyboard, RotateCcw } from 'lucide-react'
 import { GameHeading, PersonaNote, ResultBadge, Tag } from '../components/Common'
 import SensorChart from '../components/SensorChart'
+import GameScene from '../components/GameScene'
 import { makeDriftRound, scoreDrift, sensors } from '../lib/drift'
 import type { SensorId } from '../lib/drift'
 import { attemptId } from '../lib/scoring'
 import { useRoundActivity } from '../lib/hooks'
 import type { GameProps } from '../lib/hooks'
 
-export default function SpotDrift({ onResult, onActive }: GameProps) {
+export default function SpotDrift({ onResult, onActive, onStart }: GameProps) {
   const [sensorId, setSensorId] = useState<SensorId>('chiller')
   const [phase, setPhase] = useState<'ready' | 'playing' | 'done'>('ready')
   const [round, setRound] = useState(() => makeDriftRound(sensors[0]!, 21))
@@ -95,9 +96,10 @@ export default function SpotDrift({ onResult, onActive }: GameProps) {
     {notice && <p className="notice" role="status">{notice}</p>}
     {phase === 'ready' ? <div className="drift-intro">
       <div className="panel drift-instructions"><div className="eyebrow">CHLOE'S EARLY-WARNING CHALLENGE</div><h2>Catch it before<br /><span>the tenant calls.</span></h2>
-        <p>Watch the sensor. Press <kbd>space</kbd> or tap the alarm when readings start a sustained rise above the alert line. One lonely spike? Don't panic.</p>
+        <p>Spot a sustained rise above the alert line. Tap the alarm or press <kbd>space</kbd>.</p>
+        <div className="reaction-rules"><span><Activity size={21} />Watch the trend</span><span><BellRing size={21} />Ignore lone spikes</span><span><Keyboard size={21} />Tap when it drifts</span></div>
         <div className="sensor-choices">{sensors.map((item) => <button key={item.id} className={`sensor-choice${sensorId === item.id ? ' selected' : ''}`} onClick={() => setSensorId(item.id)} aria-pressed={sensorId === item.id}><Activity size={19} /><span><strong>{item.id === 'chiller' ? 'Chiller CH-2' : 'Meeting Room 7'}</strong><small>{item.id === 'chiller' ? 'Approach temperature' : 'CO2 level'}</small></span><span className="selection-dot" /></button>)}</div>
-        <button className="button button-primary" onClick={start}>Watch the sensor<ArrowRight size={18} /></button>
+        <button className="button button-primary" onClick={() => onStart(start)}>Watch the sensor<ArrowRight size={18} /></button>
         <p className="helper">24-second rounds. Some rounds stay healthy: wait to earn an all-clear. No actual building systems are connected.</p>
       </div>
       <div className="drift-preview panel" aria-hidden="true"><div className="mini-chart-title"><span className="live-dot" />CH-2 / SYNTHETIC FEED</div><svg viewBox="0 0 400 180"><path className="preview-grid" d="M0 40H400M0 90H400M0 140H400" /><path className="preview-trace" d="M0 145L25 138L50 144L75 130L100 139L125 80L150 140L175 135L200 128L225 110L250 106L275 85L300 79L325 60L350 44L380 30" /><circle cx="380" cy="30" r="6" /></svg><div className="preview-caption"><BellRing size={24} /><span>A single spike is gossip.<br /><strong>A sustained trend is a story.</strong></span></div></div>
@@ -112,9 +114,9 @@ export default function SpotDrift({ onResult, onActive }: GameProps) {
         <div className="sensor-top"><div><div className="eyebrow">SYNTHETIC TELEMETRY / {phase === 'done' ? 'ROUND REPLAY' : 'WATCHING'}</div><h2>{round.sensor.title}</h2></div>
           <div className="sensor-reading"><strong>{lastSample.value}</strong><span>{round.sensor.unit}</span></div></div>
         <div className="chart-legend"><span><i className="line-key" />Sensor</span><span><i className="line-key threshold-key" />Alert {round.sensor.threshold} {round.sensor.unit}</span><span><i className="line-key impact-key" />Fictional impact {round.sensor.impact} {round.sensor.unit}</span><span>{Math.floor(elapsed)} / {round.duration}s</span></div>
-        <SensorChart round={round} elapsed={elapsed} revealed={phase === 'done'} pressedAt={pressedAt} />
+        <div className="live-sensor-visual"><div className="sensor-illustration"><GameScene scene={round.sensor.id} /><span>{round.sensor.id === 'chiller' ? 'COOLING PLANT' : 'MEETING ROOM 7'}</span><div className="sensor-value-track"><span style={{ transform: `scaleX(${Math.min(1, Math.max(0, (lastSample.value - round.sensor.min) / (round.sensor.max - round.sensor.min)))})` }} /></div></div><SensorChart round={round} elapsed={elapsed} revealed={phase === 'done'} pressedAt={pressedAt} /></div>
         {phase === 'playing' ? <div className="alarm-controls"><button className="button button-primary alarm-button" onClick={raiseAlarm}><BellRing size={23} />Raise the alarm<span><Keyboard size={16} /><kbd>space</kbd></span></button><p className="helper">React to a sustained rise, not a single spike. Healthy all the way? Wait until the round ends.</p></div>
-          : <div className="round-explanation"><p><strong>How the comparison works:</strong> the simulated detector alerts after three consecutive readings meet the alert threshold. It sees only the samples you saw, one per second. It is not a live AI or Fabric connection.</p><p className="helper">All values and impact boundaries are game rules, not operational guidance. Local scores are grouped by sensor.</p><button className="button button-primary" onClick={start}><RotateCcw size={17} />Another round</button><button className="button button-secondary" onClick={() => setPhase('ready')}>Change sensor</button></div>}
+          : <div className="round-explanation"><details><summary>How the simulated detector works</summary><p>It alerts after three consecutive readings meet the threshold, using only samples seen so far. Not a live AI or Fabric connection. Thresholds are fictional game rules.</p></details><button className="button button-primary" onClick={() => onStart(start)}><RotateCcw size={17} />Another round</button><button className="button button-secondary" onClick={() => setPhase('ready')}>Change sensor</button></div>}
       </div>
     </>}
     <PersonaNote name="Chloe">An early signal becomes useful when it leads to an investigation and a heads-up to affected tenants. The facilities team still makes the call.</PersonaNote>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Check, MessageSquareQuote, Mic, MicOff, RotateCcw } from 'lucide-react'
+import { ArrowDownUp, ArrowRight, Banknote, Check, Fan, Gavel, MessageSquareQuote, Mic, MicOff, RotateCcw, Sun, UsersRound, Wind, Zap } from 'lucide-react'
 import { GameHeading, LiveHandoff, PersonaNote, Tag } from '../components/Common'
 import { phraseCards } from '../data/phrases'
 import { attemptId, findPhrase } from '../lib/scoring'
@@ -9,8 +9,12 @@ import type { SpeechRecognitionLike } from '../lib/speech'
 import { useRoundActivity } from '../lib/hooks'
 import type { GameProps } from '../lib/hooks'
 import type { PhraseCard } from '../types'
+import type { LucideIcon } from 'lucide-react'
+import GameScene from '../components/GameScene'
 
-export default function Singlish({ onResult, onActive }: GameProps) {
+const phraseIcons: Record<string, LucideIcon> = { aircon: Fan, room: Wind, rent: Banknote, power: Zap, solar: Sun, bid: Gavel, tenants: UsersRound, lift: ArrowDownUp }
+
+export default function Singlish({ onResult, onActive, onStart }: GameProps) {
   const [input, setInput] = useState(phraseCards[0]!.line)
   const [card, setCard] = useState<PhraseCard | null>(null)
   const [choice, setChoice] = useState<number | null>(null)
@@ -114,12 +118,14 @@ export default function Singlish({ onResult, onActive }: GameProps) {
       setStatus(input.trim() ? 'No prepared rewrite matches this text. Choose a preset, edit the transcript, or use the optional live Copilot handoff below.' : 'Please enter a fictional phrase or choose a preset.')
       return
     }
-    setUnmatched(false)
-    setStatus('')
-    setCard(found)
-    setChoice(null)
-    answered.current = false
-    attempt.current = attemptId()
+    onStart(() => {
+      setUnmatched(false)
+      setStatus('')
+      setCard(found)
+      setChoice(null)
+      answered.current = false
+      attempt.current = attemptId()
+    })
   }
   function handleAnswer(index: number) {
     if (!card || answered.current) return
@@ -140,12 +146,13 @@ export default function Singlish({ onResult, onActive }: GameProps) {
     <div className="singlish-layout">
       <div className="singlish-input panel">
         <div className="section-label"><span>THE EVERYDAY VERSION</span><MessageSquareQuote size={20} /></div>
-        <h2>Say it your way.</h2><p>Pick a fictional phrase, read it aloud, or type it. Then spot the boardroom rewrite that keeps the facts straight.</p>
+        <GameScene scene={findPhrase(input, phraseCards)?.id ?? 'message'} />
+        <h2>Say it your way.</h2><p>Choose a line. Spot the rewrite that keeps the meaning.</p>
         <label className="input-label" htmlFor="singlish-input">Your phrase / editable transcript</label>
         <textarea id="singlish-input" maxLength={700} value={input} onChange={(event) => edit(event.target.value)} />
         <div className="voice-panel">
           <div className="voice-heading"><Mic size={17} /><strong>Voice is optional</strong></div>
-          <p>Browser speech recognition may need internet and send audio to its provider. This app saves no audio or transcript. Please use fictional content only.</p>
+          <p>Voice may send audio to your browser's provider and need internet. This app saves no audio or transcript. Fictional content only.</p>
           {!Recognition || location.protocol === 'file:' ? <p className="helper">Voice is unavailable in this browser or local-file mode. Presets and typing still work.</p> : <>
             <label className="consent-control"><input type="checkbox" checked={consent} onChange={(event) => {
               setConsent(event.target.checked)
@@ -158,12 +165,15 @@ export default function Singlish({ onResult, onActive }: GameProps) {
         </div>
         {status && <p className={`notice${unmatched ? ' notice-warning' : ''}`} role="status">{status}</p>}
         <button className="button button-primary button-wide" onClick={handleMatch} disabled={listening}>Find the boardroom match<ArrowRight size={17} /></button>
-        <p className="helper">Offline content is an authored phrase bank, not an AI model. New free text needs the optional live handoff.</p>
+        <p className="helper">Prepared phrase cards, not live AI. New text: use the Copilot handoff.</p>
       </div>
       <aside className="preset-panel panel"><div className="section-label"><span>BORROW A LINE</span><span>8 phrase cards</span></div>
-        <div className="phrase-presets">{phraseCards.map((item, index) => <button key={item.id} className={input === item.line ? 'phrase-preset selected' : 'phrase-preset'} onClick={() => { stopVoice(); edit(item.line) }}>
-          <span>0{index + 1}</span><div><strong>{item.title}</strong><p>{item.line}</p></div>
-        </button>)}</div>
+        <div className="phrase-presets">{phraseCards.map((item, index) => {
+          const Icon = phraseIcons[item.id] ?? MessageSquareQuote
+          return <button key={item.id} className={input === item.line ? 'phrase-preset selected' : 'phrase-preset'} onClick={() => { stopVoice(); edit(item.line) }}>
+            <Icon size={28} /><span>0{index + 1}</span><strong>{item.title}</strong>
+          </button>
+        })}</div>
       </aside>
     </div>
     {card && <div className="rewrite-panel panel" ref={rewritePanel} tabIndex={-1}>

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
-import type { GameResult, ResultInput } from '../types'
+import type { GameResult, PlayerProfile, ResultInput } from '../types'
+import { validateNickname } from './players'
 
 export const SCORE_KEY = 'jtc-playground-results-v1'
 
@@ -18,6 +19,10 @@ export function isGameResult(value: unknown): value is GameResult {
     && typeof value.maxScore === 'number' && Number.isFinite(value.maxScore)
     && value.maxScore > 0 && value.score <= value.maxScore
     && typeof value.playedAt === 'number' && Number.isFinite(value.playedAt)
+    && ((value.nickname === undefined && value.playerId === undefined)
+      || (typeof value.nickname === 'string' && value.nickname.length > 0
+        && validateNickname(value.nickname).value === value.nickname && !validateNickname(value.nickname).error
+        && typeof value.playerId === 'string' && value.playerId.length > 0 && value.playerId.length <= 128))
     && (value.elapsedMs === undefined || (typeof value.elapsedMs === 'number'
       && Number.isFinite(value.elapsedMs) && value.elapsedMs >= 0))
 }
@@ -31,8 +36,8 @@ function loadResults(): { results: GameResult[]; warning: string } {
       return { results: [], warning: 'Saved scores could not be read. New scores start fresh on this device.' }
     }
     return {
-      results: parsed.slice(-200).map(({ id, game, variant, player, score, maxScore, perfect, playedAt, elapsedMs }) => ({
-        id, game, variant, player, score, maxScore, perfect, playedAt, elapsedMs,
+      results: parsed.slice(-200).map(({ id, game, variant, player, score, maxScore, perfect, playedAt, elapsedMs, nickname, playerId }) => ({
+        id, game, variant, player, score, maxScore, perfect, playedAt, elapsedMs, nickname, playerId,
       })),
       warning: '',
     }
@@ -46,18 +51,20 @@ export function useScores() {
   const [results, setResults] = useState(initial.results)
   const [warning, setWarning] = useState(initial.warning)
   const current = useRef(initial.results)
-  const persist = useCallback((next: GameResult[]) => {
+  const persist = useCallback((next: GameResult[], action: 'save' | 'clear' = 'save') => {
     current.current = next
     setResults(next)
     try {
       localStorage.setItem(SCORE_KEY, JSON.stringify(next))
       setWarning('')
     } catch {
-      setWarning('Scores could not be saved in this browser. They last only for this open session.')
+      setWarning(action === 'clear'
+        ? 'Saved nicknames and scores could not be cleared from this browser. Check browser storage settings; old saved results may remain.'
+        : 'Scores could not be saved in this browser. They last only for this open session.')
     }
   }, [])
 
-  const record = useCallback((input: ResultInput) => {
+  const record = useCallback((input: ResultInput, profile?: PlayerProfile) => {
     const previous = current.current
     if (previous.some((entry) => entry.id === input.id)) return
     const lastPlayer = previous.reduce((max, entry) => Math.max(max, Number(entry.player.slice(7))), 0)
@@ -67,12 +74,13 @@ export function useScores() {
       elapsedMs: input.elapsedMs,
       player: `Player ${String(lastPlayer + 1).padStart(3, '0')}`,
       playedAt: Date.now(),
+      ...(profile ? { nickname: profile.nickname, playerId: profile.id } : {}),
     }
     persist([...previous, result].slice(-200))
   }, [persist])
 
   const clear = useCallback(() => {
-    persist([])
+    persist([], 'clear')
   }, [persist])
 
   return { results, record, clear, warning }

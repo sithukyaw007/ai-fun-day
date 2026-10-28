@@ -2,11 +2,12 @@ import { useRef, useState } from 'react'
 import { ArrowRight, Check, Lightbulb, RotateCcw, Smartphone, X } from 'lucide-react'
 import { quizQuestions } from '../data/quiz'
 import { GameHeading, ResultBadge, Tag } from '../components/Common'
+import GameScene from '../components/GameScene'
 import { useRoundActivity } from '../lib/hooks'
 import type { GameProps } from '../lib/hooks'
 import { attemptId } from '../lib/scoring'
 
-export default function Quiz({ onResult, onActive }: GameProps) {
+export default function Quiz({ onResult, onActive, onStart }: GameProps) {
   const [phase, setPhase] = useState<'ready' | 'playing' | 'done'>('ready')
   const [index, setIndex] = useState(0)
   const [responses, setResponses] = useState<(boolean | null)[]>(quizQuestions.map(() => null))
@@ -48,14 +49,15 @@ export default function Quiz({ onResult, onActive }: GameProps) {
       <div className="quiz-art" aria-hidden="true"><span>AI?</span><span>Aiyoh.</span><Lightbulb size={48} /></div>
       <div className="eyebrow">8 CLAIMS. TRUST YOUR INSTINCTS.</div>
       <h2>Can, or cannot?</h2>
-      <p>AI sounds clever. But is it making sense? Give each claim a <strong>Can!</strong> or an <strong>Aiyoh!</strong> and see how your instincts stack up.</p>
-      <button className="button button-primary" onClick={start}>Let's play<ArrowRight size={18} /></button>
-      <p className="helper">No sign-in. No photo guessing. No contact collection.<br />Play on your phone and show your result to the host.</p>
+      <p>Eight quick calls. Tap <strong>Can!</strong> or <strong>Aiyoh!</strong><br />Trust your instincts. Check the facts.</p>
+      <button className="button button-primary" onClick={() => onStart(start)}>Let's play<ArrowRight size={18} /></button>
+      <p className="helper">Optional nickname. No sign-in. Scores stay here.<br />Show your result to the booth host.</p>
     </div> : phase === 'playing' ? <div className="quiz-card panel">
       <div className="quiz-progress" aria-label={`Question ${index + 1} of ${quizQuestions.length}`}>
         {quizQuestions.map((item, i) => <span key={item.id} className={i < index ? 'complete' : i === index ? 'current' : ''} />)}
       </div>
       <div className="section-label"><span>QUESTION {index + 1} / {quizQuestions.length}</span><span>{question.topic}</span></div>
+      <div className="question-visual"><GameScene scene={question.id} /></div>
       <h2 className="quiz-claim">{question.claim}</h2>
       <div className="quiz-choices">
         <button className={`quiz-choice${chosen === true ? ' chosen' : ''}`} disabled={chosen !== null}
@@ -69,7 +71,7 @@ export default function Quiz({ onResult, onActive }: GameProps) {
       </div>
       {chosen !== null && <div className="quiz-feedback" role="status">
         <span className="feedback-icon">{chosen === question.correct ? <Check size={21} /> : <Lightbulb size={21} />}</span>
-        <div><h3>{chosen === question.correct ? 'Steady. You got it.' : 'A little plot twist.'}</h3><p>{question.explanation}</p></div>
+        <div><h3>{chosen === question.correct ? 'Steady. You got it.' : 'A little plot twist.'}</h3><details><summary>Why?</summary><p>{question.explanation}</p></details></div>
       </div>}
       {chosen !== null && <button className="button button-primary next-question" onClick={next}>
         {index === quizQuestions.length - 1 ? 'Reveal my score' : 'Next claim'}<ArrowRight size={18} />
@@ -80,7 +82,7 @@ export default function Quiz({ onResult, onActive }: GameProps) {
         <p>Show this card to the booth host. This is an informal game result, not a certificate or a verified prize entry.</p>
       </ResultBadge>
       <div className="panel quiz-takeaways"><span className="eyebrow">TAKE THESE INSTINCTS WITH YOU</span><h2>Sources over swagger.</h2><p>Check the evidence. Know the data's limits. Keep people in control.</p>
-        <button className="button button-primary" onClick={start}><RotateCcw size={17} />Play again</button>
+        <button className="button button-primary" onClick={() => onStart(start)}><RotateCcw size={17} />Play again</button>
         <a className="text-link" href="#/beat">Try Mei's evidence hunt<ArrowRight size={16} /></a>
       </div>
       <p className="helper centered">Your score stays on this device. Nothing is synced to the laptop.</p>

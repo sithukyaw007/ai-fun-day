@@ -42,7 +42,7 @@ export default function JoinQuiz({ dark }: { dark: boolean }) {
         {image ? <img className="qr-image" src={image} alt={`QR code linking directly to the AI or Aiyoh quiz: ${target}`} width={300} height={300} />
           : <div className="qr-placeholder"><QrCode size={70} /><p>{target ? 'Preparing your QR code...' : 'A public HTTPS link is needed before visitors can scan.'}</p></div>}
         {error && <p role="alert" className="notice notice-warning">{error}</p>}
-        <strong className="qr-tagline">No names. Just good instincts.</strong>
+        <strong className="qr-tagline">Pick a nickname. Bring your instincts.</strong>
         {target && <><a className="quiz-url" href={target}>{target}</a><CopyPrompt text={target} label="Copy quiz link" successMessage="Quiz link copied. Open this QR page on your phone, or share the quiz link with visitors." /></>}
         {image && <a className="text-link" href={image} download="jtc-quiz-qr.png"><ArrowDownToLine size={16} />Save QR image</a>}
       </div>

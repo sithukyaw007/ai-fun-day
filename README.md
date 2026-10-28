@@ -12,6 +12,7 @@ Four browser games for the Microsoft booth at JTC AI & Analytics Day. Fictional 
 | All four games | [Game gallery](https://sithukyaw007.github.io/ai-fun-day/#/home) |
 | Cold-start laptop backup | [Download the standalone HTML](https://sithukyaw007.github.io/ai-fun-day/booth-offline.html) |
 | Operating notes | [Host guide and privacy](https://sithukyaw007.github.io/ai-fun-day/#/host) |
+| Nickname leaderboard | [This device's best players](https://sithukyaw007.github.io/ai-fun-day/#/scores) |
 
 ## Games
 
@@ -60,6 +61,14 @@ node scripts/serve-release.mjs
 
 Use the in-app **Host guide & privacy** page for operation and reset instructions. Start a new round between visitors; changing game cancels an unfinished attempt. A hidden tab cancels an active drift round without saving a score.
 
+### Player check-in and visual play
+
+Before the first round, a check-in screen asks for an optional name/nickname. Prefer a nickname; blank input or the guest button creates a guest label. The game clock starts only after check-in is complete. Use **Next player** between visitors: it resets the game and opens a fresh check-in rather than reusing the previous visitor's name. Changing player is disabled during an active round.
+
+The current player is kept in memory only and forgotten on reload. Completed results retain the chosen nickname locally. Replaying under the same player keeps only that player's best attempt on each case's leaderboard; people who choose the same nickname are not merged.
+
+Beat the Agent opens visual service maps, tenant cards, status checklists, bid bars and lease-calendar cards instead of spreadsheet tables. Pin a card to cite its exact source row; **Read original source** expands the unabridged evidence. Quiz questions and Singlish scenarios have local inline illustrations, and drift gameplay includes the plant/room alongside the live chart. Longer mission briefs, reasoning and quiz explanations are available on demand. No image or diagram service is contacted.
+
 ### Offline readiness
 
 Open the public site online once and wait for **Offline copy cached on this device** before disconnecting. All gameplay stays in the cached HTML. A downloaded standalone HTML copy does not require an initial cache or local server.
@@ -84,11 +93,11 @@ Rehearse microphone permissions, Singapore-English recognition, and the approved
 
 ### Scores and privacy
 
-Scores use generated labels such as `Player 001`. The latest 200 attempts are stored only in this browser under `jtc-playground-results-v1`; each variant has a top-ten view. Beat the Agent complete, on-time, evidenced answers rank before practice attempts. Different cases/phrases/sensors are kept separate.
+Optional nicknames or labels such as `Guest 001` appear on the **Leaderboard**, including a top-three podium and top-ten table. The latest 200 attempts are stored only in this browser under `jtc-playground-results-v1`; each variant shows one best attempt per player. Beat the Agent complete, on-time, evidenced answers rank before practice attempts. Different cases/phrases/sensors are kept separate. Legacy `Player 001` scores are preserved.
 
-Phones never sync scores to the laptop. Results and replay are informal and not tamper-proof; public source includes answer keys. No real names, email, webcam, app analytics, or lead list are collected. Storage denial is explicitly reported and leaves session-only play available.
+Phones never sync scores to the laptop. The hosted site and standalone file also have separate browser storage; stay on the cached hosted site to keep the same board offline. Nicknames and scores are never uploaded or placed in share URLs. Avoid real names or personal details. Results and replay are informal and not tamper-proof; public source includes answer keys. No sign-in, contact details, webcam, app analytics, or lead list is collected. Storage denial is explicitly reported and leaves session-only play available.
 
-Clear scores through **Local scores > Clear this device's scores**, then confirm. Clear each used device independently after the event. Browser speech and a manually used external Copilot session have their own provider processing policies. GitHub Pages may retain standard access/security logs.
+Clear nicknames and scores through **Leaderboard > Clear this device's scores**, then confirm. Clear each used device independently after the event. Browser speech and a manually used external Copilot session have their own provider processing policies. GitHub Pages may retain standard access/security logs.
 
 All people, tenants, documents, amounts and sensor readings in the games are fictional. Thresholds and impact lines are illustrative game rules, not operational or safety advice. The source presentation is not included in the repository or release.
 

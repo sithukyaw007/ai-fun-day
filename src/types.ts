@@ -4,6 +4,14 @@ export type Route = GameId | 'home' | 'join' | 'scores' | 'host'
 export interface SourceRow {
   id: string
   cells: string[]
+  visual?: {
+    detail?: string
+    status?: string
+    icon?: 'tenant' | 'fan' | 'calendar' | 'cash' | 'check' | 'alert' | 'power' | 'solar' | 'mail' | 'shield' | 'map'
+    tone?: 'neutral' | 'muted' | 'attention' | 'positive'
+    units?: string[]
+    amount?: number
+  }
 }
 
 export interface EvidenceFile {
@@ -13,6 +21,8 @@ export interface EvidenceFile {
   caption: string
   columns: string[]
   rows: SourceRow[]
+  shortTitle?: string
+  presentation?: 'map' | 'tenants' | 'checks' | 'bids' | 'leases' | 'messages'
 }
 
 export interface AnswerOption {
@@ -65,6 +75,13 @@ export interface ResultInput {
 export interface GameResult extends ResultInput {
   player: string
   playedAt: number
+  nickname?: string
+  playerId?: string
+}
+
+export interface PlayerProfile {
+  id: string
+  nickname: string
 }
 
 export const gameNames: Record<GameId, string> = {

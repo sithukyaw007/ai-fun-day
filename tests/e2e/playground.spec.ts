@@ -13,9 +13,17 @@ async function results(page: Page) {
   return page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), SCORE_KEY)
 }
 
+async function preparePlayer(page: Page, nickname = 'ChillerChamp') {
+  await page.getByRole('button', { name: 'Choose your nickname', exact: true }).click()
+  await page.getByLabel('Name or nickname (optional)').fill(nickname)
+  await page.getByRole('button', { name: 'Join the leaderboard', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+}
+
 test('all four evidence cases can be won with genuine citations', async ({ page }) => {
   await page.goto('./')
   await expect(page.getByRole('heading', { name: 'Beat the Agent', exact: true })).toBeVisible()
+  await preparePlayer(page)
   for (const challenge of challenges) {
     await page.locator('.challenge-option').filter({ hasText: challenge.title }).click()
     await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
@@ -32,7 +40,7 @@ test('all four evidence cases can be won with genuine citations', async ({ page 
     await expect(page.getByRole('heading', { name: 'Case cracked. Evidence and all.' })).toBeVisible()
     const ref = challenge.requiredEvidence[0]!
     await page.getByRole('button', { name: ref, exact: true }).click()
-    await expect(page.locator(`[id="source-${ref}"]`)).toHaveClass('source-highlight')
+    await expect(page.locator(`[id="source-${ref}"]`)).toHaveClass(/source-highlight/)
     await expect(page.getByText('Not live AI', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Choose another case' }).click()
   }
@@ -46,6 +54,7 @@ test('all four evidence cases can be won with genuine citations', async ({ page 
 test('timeouts save once, and leaving a game cancels its timer', async ({ page }) => {
   await page.clock.install()
   await page.goto('./')
+  await preparePlayer(page)
   await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
   await page.clock.fastForward(61_000)
   await expect(page.getByRole('heading', { name: 'Time up. Let the evidence talk.' })).toBeVisible()
@@ -62,10 +71,14 @@ test('timeouts save once, and leaving a game cancels its timer', async ({ page }
 test('quiz has eight scored claims, explanations and a replayable phone result', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('./#/quiz')
+  await preparePlayer(page)
   await page.getByRole('button', { name: "Let's play" }).click()
   for (const [index, question] of quizQuestions.entries()) {
     await expect(page.getByRole('heading', { name: question.claim })).toBeVisible()
+    if (index === 0) await page.screenshot({ path: 'test-results/illustrated-quiz-phone.png', fullPage: true })
     await page.getByRole('button', { name: question.correct ? 'Can! That checks out.' : 'Aiyoh! Not so fast.' }).click()
+    await expect(page.locator('.question-visual .game-scene')).toHaveAttribute('data-scene', question.id)
+    await page.locator('.quiz-feedback summary').click()
     await expect(page.getByText(question.explanation)).toBeVisible()
     await page.getByRole('button', { name: index === 7 ? 'Reveal my score' : 'Next claim' }).click()
   }
@@ -79,7 +92,10 @@ test('quiz has eight scored claims, explanations and a replayable phone result',
 test('spacebar and touch alarms work, and a healthy round rewards patience', async ({ page }) => {
   await page.clock.install()
   await page.goto('./#/drift')
+  await preparePlayer(page)
   await page.getByRole('button', { name: 'Watch the sensor' }).click()
+  await expect(page.locator('.sensor-illustration .game-scene')).toBeVisible()
+  await page.screenshot({ path: 'test-results/illustrated-drift.png', fullPage: true })
   await page.keyboard.press('Space')
   await expect(page.getByRole('heading', { name: 'That was a blip, not a drift.' })).toBeVisible()
   await page.getByRole('button', { name: 'Another round' }).click()
@@ -96,7 +112,10 @@ test('spacebar and touch alarms work, and a healthy round rewards patience', asy
 
 test('Singlish rewrites keep meaning and unmatched text does not get fake AI output', async ({ page }) => {
   await page.goto('./#/singlish')
+  await preparePlayer(page)
   await page.getByRole('button', { name: 'Find the boardroom match' }).click()
+  await expect(page.locator('.rewrite-panel')).toBeFocused()
+  await page.screenshot({ path: 'test-results/illustrated-singlish.png', fullPage: true })
   await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
   await expect(page.getByRole('heading', { name: 'Professional. Faithful. Confirm can.' })).toBeVisible()
   expect((await results(page))[0]).toMatchObject({ game: 'singlish', score: 1 })
@@ -149,6 +168,7 @@ test('speech permission errors explicitly preserve preset play', async ({ page }
     Object.assign(window, { SpeechRecognition: DeniedRecognition })
   })
   await page.goto('./#/singlish')
+  await preparePlayer(page)
   await page.getByRole('checkbox', { name: 'I understand and choose to use voice input.' }).check()
   await page.getByRole('button', { name: 'Start voice input', exact: true }).click()
   await expect(page.getByText(/Microphone permission was denied/)).toBeVisible()
@@ -191,6 +211,7 @@ test('warmed service-worker cache survives a fully offline reload', async ({ pag
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible()
     expect(page.url()).toContain(`#/${route}`)
   }
+  await preparePlayer(page)
   await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
   await page.getByRole('button', { name: 'Lock in my answer' }).click()
   await expect(page.getByText('PREPARED REFERENCE ANSWER', { exact: true })).toBeVisible()
@@ -205,6 +226,7 @@ test('standalone HTML cold-starts offline without a server or external requests'
   page.on('request', (request) => { if (/^https?:/.test(request.url())) external.push(request.url()) })
   await page.goto(pathToFileURL(path.resolve('bundle.html')).href)
   await expect(page.getByRole('heading', { name: 'Beat the Agent', exact: true })).toBeVisible()
+  await preparePlayer(page)
   for (const heading of ['Spot the Drift', 'AI or Aiyoh?', 'Singlish to Boardroom']) {
     await page.getByRole('navigation', { name: 'Games' }).getByRole('link', { name: heading }).click()
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible()
@@ -227,11 +249,12 @@ test('storage failures are visible and do not break a round', async ({ page }) =
   })
   await page.goto('./')
   await expect(page.getByText(/Browser storage is unavailable/)).toBeVisible()
+  await preparePlayer(page)
   await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
   await page.getByRole('button', { name: 'Lock in my answer' }).click()
   await expect(page.getByText(/Scores could not be saved in this browser/)).toBeVisible()
-  await page.getByRole('link', { name: 'Local scores' }).click()
-  await expect(page.getByText('Player 001')).toBeVisible()
+  await page.getByRole('link', { name: 'Leaderboard', exact: true }).click()
+  await expect(page.getByRole('cell', { name: 'ChillerChamp', exact: true })).toBeVisible()
 })
 
 test('desktop and mobile layouts have no overflow or serious accessibility violations', async ({ page }) => {
@@ -272,9 +295,10 @@ test('the main start button fits a typical laptop without scrolling', async ({ p
 
 test('clearing scores requires confirmation and only clears local results', async ({ page }) => {
   await page.goto('./#/singlish')
+  await preparePlayer(page)
   await page.getByRole('button', { name: 'Find the boardroom match' }).click()
   await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
-  await page.getByRole('link', { name: 'Local scores', exact: true }).click()
+  await page.getByRole('link', { name: 'Leaderboard', exact: true }).click()
   await page.getByRole('button', { name: "Clear this device's scores" }).click()
   await page.getByRole('button', { name: 'Keep scores' }).click()
   expect(await results(page)).toHaveLength(1)
@@ -282,4 +306,103 @@ test('clearing scores requires confirmation and only clears local results', asyn
   await page.getByRole('button', { name: 'Yes, clear local scores' }).click()
   await page.reload()
   expect(await results(page)).toHaveLength(0)
+})
+
+test('check-in is optional, cancellable, and does not spend the game clock', async ({ page }) => {
+  await page.clock.install()
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.clock.fastForward(120_000)
+  expect(await results(page)).toHaveLength(0)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Open the case. Start the clock.' })).toBeVisible()
+  await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
+  await page.getByRole('button', { name: 'Play as Guest 001 instead' }).click()
+  await expect(page.locator('.countdown strong')).toHaveText('60s')
+  await page.getByRole('button', { name: 'Lock in my answer' }).click()
+  expect((await results(page))[0]).toMatchObject({ nickname: 'Guest 001' })
+})
+
+test('named players appear on the podium, replay keeps one best entry, and next player resets', async ({ page }) => {
+  const outgoing: string[] = []
+  page.on('request', (request) => outgoing.push(request.url() + (request.postData() ?? '')))
+  await page.goto('./#/singlish')
+  await preparePlayer(page)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await page.getByRole('button', { name: 'Find the boardroom match' }).click()
+    await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
+    await page.getByRole('link', { name: 'View leaderboard', exact: true }).click()
+    await expect(page.getByRole('article', { name: 'Rank 1: ChillerChamp', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'ChillerChamp', exact: true })).toHaveCount(1)
+    if (attempt === 0) await page.getByRole('navigation', { name: 'Games' }).getByRole('link', { name: 'Singlish to Boardroom' }).click()
+  }
+  expect(await results(page)).toHaveLength(2)
+  await page.getByRole('navigation', { name: 'Games' }).getByRole('link', { name: 'Singlish to Boardroom' }).click()
+  await page.locator('.player-session-button').click()
+  await expect(page.getByLabel('Name or nickname (optional)')).toHaveValue('')
+  await page.getByLabel('Name or nickname (optional)').fill('DataDino')
+  await page.getByRole('button', { name: 'Join the leaderboard', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Boardroom, not bored-room.' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Find the boardroom match' }).click()
+  await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
+  await page.getByRole('link', { name: 'View leaderboard', exact: true }).click()
+  await expect(page.getByRole('cell', { name: 'DataDino', exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('cell', { name: 'ChillerChamp', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Choose your nickname', exact: true })).toBeVisible()
+  expect(outgoing.some((request) => request.includes('ChillerChamp') || request.includes('DataDino'))).toBe(false)
+  await page.screenshot({ path: 'test-results/named-leaderboard.png', fullPage: true })
+})
+
+test('legacy scores survive a named result and visual sources preserve their original rows', async ({ page }) => {
+  await page.addInitScript((key) => {
+    localStorage.setItem(key, JSON.stringify([{ id: 'legacy', game: 'beat', variant: 'ahu', score: 80, maxScore: 100, perfect: false, elapsedMs: 2000, player: 'Player 001', playedAt: 1 }]))
+  }, SCORE_KEY)
+  await page.goto('./')
+  await preparePlayer(page)
+  await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
+  await page.getByRole('tab', { name: 'tenancy_register_CURRENT.xlsx' }).click()
+  await expect(page.locator('.visual-evidence-tenants')).toBeVisible()
+  await page.getByText('Read original source', { exact: true }).click()
+  await expect(page.getByRole('cell', { name: 'Ended - historical only', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Lock in my answer' }).click()
+  const saved = await results(page)
+  expect(saved).toHaveLength(2)
+  expect(saved[0]).toMatchObject({ player: 'Player 001', id: 'legacy' })
+  expect(saved[1]).toMatchObject({ nickname: 'ChillerChamp' })
+})
+
+test('check-in and visual gameplay remain accessible in both themes', async ({ page }) => {
+  for (const theme of ['light', 'dark']) {
+    await page.goto(`./?scoutTheme=${theme}`)
+    await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([])
+    await page.screenshot({ path: `test-results/checkin-${theme}.png`, fullPage: true })
+    await page.getByLabel('Name or nickname (optional)').fill('QuizWhiz')
+    await page.getByRole('button', { name: 'Join the leaderboard', exact: true }).click()
+    await page.getByRole('tab', { name: 'L24_services_FINAL_v3.plan' }).click()
+    await expect(page.locator('.service-units')).toHaveCount(2)
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([])
+    await page.screenshot({ path: `test-results/visual-evidence-${theme}.png`, fullPage: true })
+    await page.getByRole('button', { name: 'Lock in my answer' }).click()
+    await page.getByRole('link', { name: 'View leaderboard', exact: true }).click()
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([])
+  }
+})
+
+test('a failed storage clear reports that saved nicknames may remain', async ({ page }) => {
+  await page.goto('./#/singlish')
+  await preparePlayer(page)
+  await page.getByRole('button', { name: 'Find the boardroom match' }).click()
+  await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
+  await page.getByRole('link', { name: 'Leaderboard', exact: true }).click()
+  await page.evaluate(() => { Storage.prototype.setItem = () => { throw new Error('Storage is read-only') } })
+  await page.getByRole('button', { name: "Clear this device's scores" }).click()
+  await page.getByRole('button', { name: 'Yes, clear local scores' }).click()
+  await expect(page.getByText(/Saved nicknames and scores could not be cleared/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Choose your nickname', exact: true })).toBeVisible()
+  expect(await results(page)).toHaveLength(1)
 })

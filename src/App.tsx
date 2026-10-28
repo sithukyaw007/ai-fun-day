@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Activity, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronRight, Files, Grid2X2, MessageSquareQuote, Moon, QrCode, Settings2, ShieldCheck, Smartphone, Sparkles, Sun, Trophy, Wifi, WifiOff } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Activity, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronRight, Files, Grid2X2, MessageSquareQuote, Moon, QrCode, Settings2, ShieldCheck, Smartphone, Sparkles, Sun, Trophy, UserRound, UserRoundPlus, Wifi, WifiOff } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import BeatAgent from './games/BeatAgent'
 import SpotDrift from './games/SpotDrift'
@@ -7,11 +7,14 @@ import Quiz from './games/Quiz'
 import Singlish from './games/Singlish'
 import JoinQuiz from './components/JoinQuiz'
 import LocalScores from './components/LocalScores'
+import PlayerCheckIn from './components/PlayerCheckIn'
 import { Tag } from './components/Common'
 import { useNetwork, useOfflineCache } from './lib/hooks'
 import { useScores } from './lib/scores'
+import { leaderboardUrl, nextGuestName } from './lib/players'
 import { gameNames } from './types'
-import type { GameId, Route } from './types'
+import type { GameId, PlayerProfile, ResultInput, Route } from './types'
+import { attemptId } from './lib/scoring'
 
 const games: { id: GameId; number: string; icon: LucideIcon; caption: string; badge: string }[] = [
   { id: 'beat', number: '01', icon: Files, caption: 'Find the facts. Beat the clock.', badge: 'THE MAIN EVENT' },
@@ -22,7 +25,7 @@ const games: { id: GameId; number: string; icon: LucideIcon; caption: string; ba
 const routes: string[] = [...games.map((game) => game.id), 'home', 'join', 'scores', 'host']
 
 function readRoute(): Route | 'not-found' {
-  const hash = location.hash.replace(/^#\/?/, '')
+  const hash = location.hash.replace(/^#\/?/, '').split('?')[0] ?? ''
   if (!hash) return 'beat'
   return routes.includes(hash) ? hash as Route : 'not-found'
 }
@@ -31,16 +34,25 @@ export default function App() {
   const [route, setRoute] = useState(readRoute)
   const [dark, setDark] = useState(document.documentElement.dataset.theme === 'dark')
   const [active, setActive] = useState(false)
+  const [player, setPlayer] = useState<PlayerProfile | null>(null)
+  const playerRef = useRef<PlayerProfile | null>(null)
+  const [checkIn, setCheckIn] = useState(false)
+  const pendingStart = useRef<(() => void) | null>(null)
+  const [session, setSession] = useState(0)
+  const [lastResult, setLastResult] = useState<ResultInput | null>(null)
   const main = useRef<HTMLElement>(null)
   const online = useNetwork()
   const offline = useOfflineCache()
   const scores = useScores()
+  const saveResult = scores.record
   const release = document.documentElement.dataset.release !== 'dev'
   const localFile = location.protocol === 'file:'
 
   useEffect(() => {
     const change = () => {
       setRoute(readRoute())
+      pendingStart.current = null
+      setCheckIn(false)
       window.scrollTo(0, 0)
       main.current?.focus({ preventScroll: true })
     }
@@ -55,7 +67,29 @@ export default function App() {
     document.documentElement.dataset.theme = dark ? 'light' : 'dark'
     setDark(!dark)
   }
-  const gameProps = { onResult: scores.record, onActive: setActive }
+  const recordResult = useCallback((result: ResultInput) => {
+    saveResult(result, playerRef.current ?? undefined)
+    setLastResult(result)
+  }, [saveResult])
+  const beginRound = useCallback((start: () => void) => {
+    setLastResult(null)
+    if (playerRef.current) start()
+    else {
+      pendingStart.current = start
+      setCheckIn(true)
+    }
+  }, [])
+  function nextPlayer() {
+    if (active) return
+    playerRef.current = null
+    setPlayer(null)
+    setSession((value) => value + 1)
+    setLastResult(null)
+    pendingStart.current = null
+    setCheckIn(true)
+  }
+  const gameProps = { onResult: recordResult, onActive: setActive, onStart: beginRound }
+  const isGame = games.some((game) => game.id === route)
 
   return <div className="app-shell">
     <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); main.current?.focus() }}>Skip to game</a>
@@ -64,7 +98,7 @@ export default function App() {
       <div className="header-actions">
         <span className={`connection-status${online ? '' : ' is-offline'}`}>{online ? <Wifi size={14} /> : <WifiOff size={14} />}<span>{online ? 'Offline-ready games' : 'Playing offline'}</span></span>
         <a className="header-link" href="#/join" aria-label="Quiz QR"><QrCode size={18} /><span>Quiz QR</span></a>
-        <a className="header-link" href="#/scores" aria-label="Local scores"><Trophy size={18} /><span>Local scores</span></a>
+        <a className="header-link leaderboard-link" href="#/scores" aria-label="Leaderboard"><Trophy size={18} /><span>Leaderboard</span></a>
         <button className="icon-button" onClick={toggleTheme} aria-label={dark ? 'Use light theme' : 'Use dark theme'}>{dark ? <Sun size={19} /> : <Moon size={19} />}</button>
         <a className="icon-button host-link" href="#/host" aria-label="Booth host guide"><Settings2 size={19} /></a>
       </div>
@@ -75,13 +109,28 @@ export default function App() {
     {offline.waiting && <div className="update-notice notice"><span>A new offline release is ready. {active ? 'Finish this round before updating.' : 'Update between visitors.'}</span><button className="text-button" disabled={active} onClick={offline.applyUpdate}>Load update</button></div>}
     {scores.warning && <div className="storage-notice notice notice-warning" role="status">{scores.warning}</div>}
     <main id="main-content" ref={main} tabIndex={-1} className="main-content">
-      <div className="event-line"><span>MICROSOFT BOOTH <span className="separator">/</span> JTC AI &amp; ANALYTICS DAY</span><span>Four little challenges. One connected estate.</span></div>
-      {route === 'beat' && <BeatAgent {...gameProps} />}
-      {route === 'drift' && <SpotDrift {...gameProps} />}
-      {route === 'quiz' && <Quiz {...gameProps} />}
-      {route === 'singlish' && <Singlish {...gameProps} />}
+      <div className="event-line"><span>MICROSOFT BOOTH <span className="separator">/</span> JTC AI &amp; ANALYTICS DAY</span>
+        <button className="player-session-button" disabled={active} onClick={nextPlayer} title={active ? 'Finish this round before changing player' : undefined}>
+          <UserRound size={15} />{player ? <><strong>{player.nickname}</strong><span>Next player</span></> : 'Choose your nickname'}<ChevronRight size={14} />
+        </button>
+      </div>
+      {route === 'beat' && <BeatAgent key={`beat-${session}`} {...gameProps} />}
+      {route === 'drift' && <SpotDrift key={`drift-${session}`} {...gameProps} />}
+      {route === 'quiz' && <Quiz key={`quiz-${session}`} {...gameProps} />}
+      {route === 'singlish' && <Singlish key={`singlish-${session}`} {...gameProps} />}
+      {isGame && lastResult && !active && <div className="player-result-actions">
+        <span><Trophy size={20} /><strong>{player?.nickname}</strong>, you're on the board.</span>
+        <a className="button button-secondary" href={leaderboardUrl(lastResult.game, lastResult.variant)}><Trophy size={17} />View leaderboard</a>
+        <button className="button button-primary" onClick={nextPlayer}><UserRoundPlus size={17} />Next player</button>
+      </div>}
       {route === 'join' && <JoinQuiz dark={dark} />}
-      {route === 'scores' && <LocalScores results={scores.results} onClear={scores.clear} />}
+      {route === 'scores' && <LocalScores results={scores.results} onClear={() => {
+        scores.clear()
+        playerRef.current = null
+        setPlayer(null)
+        setLastResult(null)
+        setSession((value) => value + 1)
+      }} />}
       {route === 'home' && <section className="home">
         <div className="home-heading"><Tag><Grid2X2 size={14} />Pick your kind of clever</Tag><h1>Come for the AI.<br /><span>Stay for the aiyoh.</span></h1><p>A little friendly competition, inspired by a day in a connected estate.<br />No sign-in. No real tenant data. Just you versus the challenge.</p></div>
         <div className="game-gallery">{games.map((game) => <a key={game.id} className={`gallery-card gallery-${game.id}`} href={`#/${game.id}`}>
@@ -105,14 +154,24 @@ export default function App() {
           {localFile && <p className="notice"><Check size={17} />You are using the standalone offline copy. Voice and clipboard features may be unavailable here.</p>}
           <p><strong>Voice:</strong> rehearse the microphone in the actual booth browser. Permission or service failure must never block typed/preset play. Browser speech may process audio online; use fictional phrases.</p>
           <p><strong>Optional Copilot:</strong> use your already-approved session/account. Copy the full synthetic prompt pack from the game. Check citations and uncertainty. The game has no AI API connection and never sends messages.</p>
-          <p><strong>Reset:</strong> use the game's replay controls between visitors. Leaving a game cancels the current attempt. Local scores persist only in that browser; clear them from Local scores at the end of the event.</p>
-          <p><strong>Privacy:</strong> no sign-in, contact collection, webcam, app analytics, or saved transcripts. Game results are anonymous and local. The hosting provider may retain standard access/security logs. Public-source code and prepared answers mean scores are informal, not tamper-proof.</p>
+          <p><strong>Players:</strong> each visitor can choose an optional nickname before playing, or continue as a guest. Use Next player between visitors to reset the game and avoid assigning someone else's score to the last player. Only the best attempt per player and case appears on the leaderboard.</p>
+          <p><strong>Reset:</strong> leaving a game cancels the current attempt. Nicknames and scores persist only in this browser; clear them from Leaderboard at the end of the event. The active player is forgotten on reload.</p>
+          <p><strong>Privacy:</strong> a nickname is optional and is saved locally with game results, never uploaded. Please avoid real names or personal details. No sign-in, contact details, webcam, app analytics, or transcripts are collected. The hosting provider may retain standard access/security logs. Scores are informal, not tamper-proof.</p>
           <p><strong>Demonstration:</strong> all people, documents, figures and telemetry are fictional. This is not a production JTC system, an operational alarm, or a connected Microsoft service.</p>
           <p className="helper">This guide is public and changes only this device's experience. It is not an authenticated administrator panel.</p>
         </div>
       </section>}
       {route === 'not-found' && <section className="panel empty-state"><h1>That game link went missing.</h1><p>No mystery to solve here. Choose a game from the playground.</p><a className="button button-primary" href="#/home">Back to the playground<ArrowRight size={18} /></a></section>}
     </main>
+    {checkIn && <PlayerCheckIn guestName={nextGuestName(scores.results)} onCancel={() => { pendingStart.current = null; setCheckIn(false) }} onJoin={(nickname) => {
+      const profile = { id: attemptId(), nickname }
+      playerRef.current = profile
+      setPlayer(profile)
+      setCheckIn(false)
+      const start = pendingStart.current
+      pendingStart.current = null
+      start?.()
+    }} />}
     <footer className="site-footer"><div className="footer-story"><ShieldCheck size={19} /><strong>The officer decides.<span> Copilot did the legwork.</span></strong></div><div className="footer-bottom"><span>Fictional booth demo. Synthetic data. No app analytics.</span><span>{offline.status}</span><a href="#/host">Host guide &amp; privacy<ArrowRight size={13} /></a></div></footer>
   </div>
 }
