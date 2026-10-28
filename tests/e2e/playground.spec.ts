@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import jsQR from 'jsqr'
 import { pathToFileURL } from 'node:url'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { challenges } from '../../src/data/challenges'
 import { quizQuestions } from '../../src/data/quiz'
@@ -210,6 +211,10 @@ test('standalone HTML cold-starts offline without a server or external requests'
   }
   await page.getByRole('button', { name: 'Find the boardroom match' }).click()
   await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
+  await page.getByRole('link', { name: 'Quiz QR', exact: true }).click()
+  const { publicUrl } = JSON.parse(readFileSync('site.config.json', 'utf8'))
+  await expect(page.getByRole('img', { name: /^QR code linking directly/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: `${publicUrl}#/quiz`, exact: true })).toBeVisible()
   expect(errors).toEqual([])
   expect(external).toEqual([])
   await context.close()
@@ -263,4 +268,18 @@ test('the main start button fits a typical laptop without scrolling', async ({ p
   await expect(button).toBeVisible()
   const bounds = await button.boundingBox()
   expect(bounds!.y + bounds!.height).toBeLessThan(768)
+})
+
+test('clearing scores requires confirmation and only clears local results', async ({ page }) => {
+  await page.goto('./#/singlish')
+  await page.getByRole('button', { name: 'Find the boardroom match' }).click()
+  await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
+  await page.getByRole('link', { name: 'Local scores', exact: true }).click()
+  await page.getByRole('button', { name: "Clear this device's scores" }).click()
+  await page.getByRole('button', { name: 'Keep scores' }).click()
+  expect(await results(page)).toHaveLength(1)
+  await page.getByRole('button', { name: "Clear this device's scores" }).click()
+  await page.getByRole('button', { name: 'Yes, clear local scores' }).click()
+  await page.reload()
+  expect(await results(page)).toHaveLength(0)
 })

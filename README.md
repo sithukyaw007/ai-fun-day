@@ -2,6 +2,17 @@
 
 Four browser games for the Microsoft booth at JTC AI & Analytics Day. Fictional estate stories connect Mei's lease/tenant work with Chloe's facilities monitoring. No live JTC systems, AI API keys, sign-in, contact collection, or backend are required.
 
+## Launch links
+
+| Use | Link |
+| --- | --- |
+| Laptop main game | [Beat the Agent](https://sithukyaw007.github.io/ai-fun-day/#/beat) |
+| Host's phone | [Quiz QR display](https://sithukyaw007.github.io/ai-fun-day/#/join) |
+| Visitors' phones | [AI or Aiyoh? quiz](https://sithukyaw007.github.io/ai-fun-day/#/quiz) |
+| All four games | [Game gallery](https://sithukyaw007.github.io/ai-fun-day/#/home) |
+| Cold-start laptop backup | [Download the standalone HTML](https://sithukyaw007.github.io/ai-fun-day/booth-offline.html) |
+| Operating notes | [Host guide and privacy](https://sithukyaw007.github.io/ai-fun-day/#/host) |
+
 ## Games
 
 | Game | How to play | What it demonstrates |
@@ -105,7 +116,7 @@ npm run deploy -- -m "Publish JTC AI Playground release"
 
 Only the contents of `dist/` are published. Enable Pages with `gh-pages` and `/` as the publishing source. Making a private repository public is a separate, explicit publication decision; it must not be automated as part of the build.
 
-The public site's exact URL and launch links are recorded here after successful deployment.
+The Pages URL is resolved from GitHub's Pages API, not inferred from a local preview. The repository is public by the owner's explicit choice.
 
 ## Implementation
 
