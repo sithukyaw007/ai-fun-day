@@ -1,4 +1,4 @@
-const CACHE = 'jtc-playground-3a8563ed9dad'
+const CACHE = 'jtc-playground-2ebf26382ed8'
 const INDEX = new URL('./index.html', self.location).href
 
 self.addEventListener('install', (event) => {
