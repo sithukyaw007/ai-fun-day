@@ -69,6 +69,14 @@ The current player is kept in memory only and forgotten on reload. Completed res
 
 Beat the Agent opens visual service maps, tenant cards, status checklists, bid bars and lease-calendar cards instead of spreadsheet tables. Pin a card to cite its exact source row; **Read original source** expands the unabridged evidence. Quiz questions and Singlish scenarios have local inline illustrations, and drift gameplay includes the plant/room alongside the live chart. Longer mission briefs, reasoning and quiz explanations are available on demand. No image or diagram service is contacted.
 
+### Short animated gameplay guides
+
+Each player sees a three-step silent walkthrough before starting each game for the first time. The walkthrough demonstrates the controls with separate practice examples, not the live case's answers. **Got it. Let's play!** or **Skip guide** starts the pending real round; the walkthrough never auto-starts it, spends the game clock, saves a score, or activates the microphone.
+
+Use **Pause demo**, **Replay**, numbered steps, or **Next step** to control the guide. **How to play** opens it again between rounds without resetting the game or result. During a live round that button is disabled so an open guide cannot cost the visitor time. Closing the guide or pressing Escape cancels the pending start; navigating away discards it.
+
+Guide completion is in memory only, scoped to the current player and each of the four games. **Next player**, clearing player scores, or reloading resets it; different cases of the same game do not repeat it. A preview before check-in does not skip the next player's introduction. With reduced-motion enabled, the guide uses manual still frames and no autoplay. All guide code and artwork are in the self-contained offline copy; no video or audio service is required.
+
 ### Offline readiness
 
 Open the public site online once and wait for **Offline copy cached on this device** before disconnecting. All gameplay stays in the cached HTML. A downloaded standalone HTML copy does not require an initial cache or local server.

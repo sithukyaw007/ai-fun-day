@@ -9,6 +9,12 @@ import { challenges } from '../../src/data/challenges'
 import { quizQuestions } from '../../src/data/quiz'
 import { SCORE_KEY } from '../../src/lib/scores'
 
+test.beforeEach(async ({ page }) => {
+  await page.addLocatorHandler(page.locator('.gameplay-guide'), async () => {
+    await page.getByRole('button', { name: 'Skip guide', exact: true }).click()
+  })
+})
+
 async function results(page: Page) {
   return page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), SCORE_KEY)
 }
@@ -56,6 +62,7 @@ test('timeouts save once, and leaving a game cancels its timer', async ({ page }
   await page.goto('./')
   await preparePlayer(page)
   await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
+  await expect(page.getByRole('button', { name: 'Lock in my answer' })).toBeVisible()
   await page.clock.fastForward(61_000)
   await expect(page.getByRole('heading', { name: 'Time up. Let the evidence talk.' })).toBeVisible()
   await page.clock.fastForward(60_000)
@@ -232,6 +239,7 @@ test('standalone HTML cold-starts offline without a server or external requests'
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible()
   }
   await page.getByRole('button', { name: 'Find the boardroom match' }).click()
+  await page.getByRole('button', { name: 'Skip guide', exact: true }).click()
   await page.getByRole('button', { name: /^A The air-conditioning/ }).click()
   await page.getByRole('link', { name: 'Quiz QR', exact: true }).click()
   const { publicUrl } = JSON.parse(readFileSync('site.config.json', 'utf8'))

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Activity, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronRight, Files, Grid2X2, MessageSquareQuote, Moon, QrCode, Settings2, ShieldCheck, Smartphone, Sparkles, Sun, Trophy, UserRound, UserRoundPlus, Wifi, WifiOff } from 'lucide-react'
+import { Activity, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronRight, CirclePlay, Files, Grid2X2, MessageSquareQuote, Moon, QrCode, Settings2, ShieldCheck, Smartphone, Sparkles, Sun, Trophy, UserRound, UserRoundPlus, Wifi, WifiOff } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import BeatAgent from './games/BeatAgent'
 import SpotDrift from './games/SpotDrift'
@@ -8,6 +8,7 @@ import Singlish from './games/Singlish'
 import JoinQuiz from './components/JoinQuiz'
 import LocalScores from './components/LocalScores'
 import PlayerCheckIn from './components/PlayerCheckIn'
+import GameplayGuide from './components/GameplayGuide'
 import { Tag } from './components/Common'
 import { useNetwork, useOfflineCache } from './lib/hooks'
 import { useScores } from './lib/scores'
@@ -24,6 +25,11 @@ const games: { id: GameId; number: string; icon: LucideIcon; caption: string; ba
 ]
 const routes: string[] = [...games.map((game) => game.id), 'home', 'join', 'scores', 'host']
 
+interface PendingRound {
+  game: GameId
+  start: () => void
+}
+
 function readRoute(): Route | 'not-found' {
   const hash = location.hash.replace(/^#\/?/, '').split('?')[0] ?? ''
   if (!hash) return 'beat'
@@ -37,7 +43,9 @@ export default function App() {
   const [player, setPlayer] = useState<PlayerProfile | null>(null)
   const playerRef = useRef<PlayerProfile | null>(null)
   const [checkIn, setCheckIn] = useState(false)
-  const pendingStart = useRef<(() => void) | null>(null)
+  const pendingStart = useRef<PendingRound | null>(null)
+  const seenGuides = useRef(new Set<GameId>())
+  const [guide, setGuide] = useState<{ game: GameId; pendingRound: boolean } | null>(null)
   const [session, setSession] = useState(0)
   const [lastResult, setLastResult] = useState<ResultInput | null>(null)
   const main = useRef<HTMLElement>(null)
@@ -53,6 +61,7 @@ export default function App() {
       setRoute(readRoute())
       pendingStart.current = null
       setCheckIn(false)
+      setGuide(null)
       window.scrollTo(0, 0)
       main.current?.focus({ preventScroll: true })
     }
@@ -71,14 +80,22 @@ export default function App() {
     saveResult(result, playerRef.current ?? undefined)
     setLastResult(result)
   }, [saveResult])
-  const beginRound = useCallback((start: () => void) => {
-    setLastResult(null)
-    if (playerRef.current) start()
+  const prepareRound = useCallback((pending: PendingRound) => {
+    if (!seenGuides.current.has(pending.game)) setGuide({ game: pending.game, pendingRound: true })
     else {
-      pendingStart.current = start
-      setCheckIn(true)
+      pendingStart.current = null
+      pending.start()
     }
   }, [])
+  const beginRound = useCallback((start: () => void) => {
+    const game = games.find((item) => item.id === route)?.id
+    if (!game) return
+    setLastResult(null)
+    const pending = { game, start }
+    pendingStart.current = pending
+    if (playerRef.current) prepareRound(pending)
+    else setCheckIn(true)
+  }, [route, prepareRound])
   function nextPlayer() {
     if (active) return
     playerRef.current = null
@@ -86,6 +103,8 @@ export default function App() {
     setSession((value) => value + 1)
     setLastResult(null)
     pendingStart.current = null
+    seenGuides.current.clear()
+    setGuide(null)
     setCheckIn(true)
   }
   const gameProps = { onResult: recordResult, onActive: setActive, onStart: beginRound }
@@ -106,13 +125,21 @@ export default function App() {
     <div className="nav-wrap"><nav className="game-nav" aria-label="Games">
       {games.map((game) => <a key={game.id} href={`#/${game.id}`} className={route === game.id ? 'game-nav-item active' : 'game-nav-item'} aria-current={route === game.id ? 'page' : undefined}><span className="nav-number">{game.number}</span><game.icon size={18} /><span>{gameNames[game.id]}</span>{route === game.id && <span className="nav-dot" />}</a>)}
     </nav></div>
-    {offline.waiting && <div className="update-notice notice"><span>A new offline release is ready. {active ? 'Finish this round before updating.' : 'Update between visitors.'}</span><button className="text-button" disabled={active} onClick={offline.applyUpdate}>Load update</button></div>}
+    {offline.waiting && <div className="update-notice notice"><span>A new offline release is ready. {active ? 'Finish this round before updating.' : 'Update between visitors.'}</span><button className="text-button" disabled={active || checkIn || guide !== null} onClick={offline.applyUpdate}>Load update</button></div>}
     {scores.warning && <div className="storage-notice notice notice-warning" role="status">{scores.warning}</div>}
     <main id="main-content" ref={main} tabIndex={-1} className="main-content">
       <div className="event-line"><span>MICROSOFT BOOTH <span className="separator">/</span> JTC AI &amp; ANALYTICS DAY</span>
+        <div className="booth-player-tools">
+          {isGame && <button className="button button-secondary how-to-play" disabled={active}
+            title={active ? 'Finish this round to replay the guide.' : 'Watch a short gameplay demo'}
+            onClick={() => {
+              const current = games.find((game) => game.id === route)
+              if (current) { pendingStart.current = null; setGuide({ game: current.id, pendingRound: false }) }
+            }}><CirclePlay size={16} />How to play</button>}
         <button className="player-session-button" disabled={active} onClick={nextPlayer} title={active ? 'Finish this round before changing player' : undefined}>
           <UserRound size={15} />{player ? <><strong>{player.nickname}</strong><span>Next player</span></> : 'Choose your nickname'}<ChevronRight size={14} />
         </button>
+        </div>
       </div>
       {route === 'beat' && <BeatAgent key={`beat-${session}`} {...gameProps} />}
       {route === 'drift' && <SpotDrift key={`drift-${session}`} {...gameProps} />}
@@ -129,6 +156,8 @@ export default function App() {
         playerRef.current = null
         setPlayer(null)
         setLastResult(null)
+        seenGuides.current.clear()
+        pendingStart.current = null
         setSession((value) => value + 1)
       }} />}
       {route === 'home' && <section className="home">
@@ -155,6 +184,7 @@ export default function App() {
           <p><strong>Voice:</strong> rehearse the microphone in the actual booth browser. Permission or service failure must never block typed/preset play. Browser speech may process audio online; use fictional phrases.</p>
           <p><strong>Optional Copilot:</strong> use your already-approved session/account. Copy the full synthetic prompt pack from the game. Check citations and uncertainty. The game has no AI API connection and never sends messages.</p>
           <p><strong>Players:</strong> each visitor can choose an optional nickname before playing, or continue as a guest. Use Next player between visitors to reset the game and avoid assigning someone else's score to the last player. Only the best attempt per player and case appears on the leaderboard.</p>
+          <p><strong>How to play:</strong> each new player gets a short silent walkthrough before their first round of each game. Skip it or watch the three steps, then choose Got it. The game clock starts only after that. How to play replays the guide between rounds; Next player resets all four guides. Practice demos never earn scores or use the microphone. Reduced-motion mode uses manual still frames.</p>
           <p><strong>Reset:</strong> leaving a game cancels the current attempt. Nicknames and scores persist only in this browser; clear them from Leaderboard at the end of the event. The active player is forgotten on reload.</p>
           <p><strong>Privacy:</strong> a nickname is optional and is saved locally with game results, never uploaded. Please avoid real names or personal details. No sign-in, contact details, webcam, app analytics, or transcripts are collected. The hosting provider may retain standard access/security logs. Scores are informal, not tamper-proof.</p>
           <p><strong>Demonstration:</strong> all people, documents, figures and telemetry are fictional. This is not a production JTC system, an operational alarm, or a connected Microsoft service.</p>
@@ -166,11 +196,21 @@ export default function App() {
     {checkIn && <PlayerCheckIn guestName={nextGuestName(scores.results)} onCancel={() => { pendingStart.current = null; setCheckIn(false) }} onJoin={(nickname) => {
       const profile = { id: attemptId(), nickname }
       playerRef.current = profile
+      seenGuides.current.clear()
       setPlayer(profile)
       setCheckIn(false)
-      const start = pendingStart.current
+      const pending = pendingStart.current
+      if (pending) prepareRound(pending)
+    }} />}
+    {guide && <GameplayGuide game={guide.game} pendingRound={guide.pendingRound} onCancel={() => {
       pendingStart.current = null
-      start?.()
+      setGuide(null)
+    }} onContinue={() => {
+      if (playerRef.current) seenGuides.current.add(guide.game)
+      const pending = pendingStart.current
+      pendingStart.current = null
+      setGuide(null)
+      pending?.start()
     }} />}
     <footer className="site-footer"><div className="footer-story"><ShieldCheck size={19} /><strong>The officer decides.<span> Copilot did the legwork.</span></strong></div><div className="footer-bottom"><span>Fictional booth demo. Synthetic data. No app analytics.</span><span>{offline.status}</span><a href="#/host">Host guide &amp; privacy<ArrowRight size={13} /></a></div></footer>
   </div>
