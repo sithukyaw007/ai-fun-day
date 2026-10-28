@@ -4,7 +4,7 @@ import { ArrowDownToLine, ArrowRight, QrCode, Smartphone } from 'lucide-react'
 import { CopyPrompt, GameHeading, Tag } from './Common'
 import { configuredSiteUrl, quizUrl } from '../lib/sharing'
 
-export default function JoinQuiz({ dark }: { dark: boolean }) {
+export default function JoinQuiz({ dark, shared = false }: { dark: boolean; shared?: boolean }) {
   const [publicUrl, setPublicUrl] = useState(() => {
     const configured = configuredSiteUrl()
     return configured.startsWith('https://') ? configured : ''
@@ -47,7 +47,7 @@ export default function JoinQuiz({ dark }: { dark: boolean }) {
         {image && <a className="text-link" href={image} download="jtc-quiz-qr.png"><ArrowDownToLine size={16} />Save QR image</a>}
       </div>
       <div className="join-notes">
-        <div className="panel"><div className="eyebrow">FOR THE HOST'S PHONE</div><h2>Let the queue do its thing.</h2><ol className="numbered-steps"><li>Open this QR display on your phone and turn up the screen brightness.</li><li>Visitors scan it and play on their own phones using mobile data or Wi-Fi.</li><li>They show you the result. Scores stay on each device, not a shared board.</li></ol><a className="button button-primary" href="#/quiz">Play the quiz here<ArrowRight size={18} /></a></div>
+        <div className="panel"><div className="eyebrow">FOR THE HOST'S PHONE</div><h2>Let the queue do its thing.</h2><ol className="numbered-steps"><li>Open this QR display on your phone and turn up the screen brightness.</li><li>Visitors scan it and play on their own phones using mobile data or Wi-Fi.</li><li>{shared ? 'Online players share nicknames and results on the same board. Each phone keeps its own current player.' : 'They show you the result. Scores stay on each device, not a shared board.'}</li></ol><a className="button button-primary" href="#/quiz">Play the quiz here<ArrowRight size={18} /></a></div>
         <div className="panel share-settings"><label className="input-label" htmlFor="public-url">Public site URL</label><input id="public-url" type="url" value={publicUrl} placeholder="Paste the verified HTTPS site URL" onChange={(event) => setPublicUrl(event.target.value)} />
           {!target && <p className="notice notice-warning" role="status">No shareable URL yet. Localhost, file links, and local IP addresses will not work for visitors on mobile data. Paste the verified public site URL.</p>}
           <p className="helper">The QR opens the quiz directly, preserving the project's base path. It is generated on this device, not by an external QR service.</p><p className="helper">First-time visitors need internet. The laptop's offline copy cannot serve a phone without a connection.</p>

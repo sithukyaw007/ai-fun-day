@@ -17,6 +17,12 @@ bundle.html
 test-results
 playwright-report
 .impeccable/hook.cache.json
+api/local.settings.json
+api/*.zip
+infra/*.json
+!infra/abbreviations.json
+!infra/main.parameters.json
+.azure/validate-status.json
 
 # Editor directories and files
 .vscode/*

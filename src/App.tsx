@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Activity, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronRight, CirclePlay, Files, Grid2X2, MessageSquareQuote, Moon, QrCode, Settings2, ShieldCheck, Smartphone, Sparkles, Sun, Trophy, UserRound, UserRoundPlus, Wifi, WifiOff } from 'lucide-react'
+import { Activity, ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronRight, CirclePlay, Cloud, Files, Grid2X2, MessageSquareQuote, Moon, QrCode, Settings2, ShieldCheck, Smartphone, Sparkles, Sun, Trophy, UserRound, UserRoundPlus, Wifi, WifiOff } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import BeatAgent from './games/BeatAgent'
 import SpotDrift from './games/SpotDrift'
@@ -12,6 +12,7 @@ import GameplayGuide from './components/GameplayGuide'
 import { Tag } from './components/Common'
 import { useNetwork, useOfflineCache } from './lib/hooks'
 import { useScores } from './lib/scores'
+import { useSharedScores } from './lib/sharedScores'
 import { leaderboardUrl, nextGuestName } from './lib/players'
 import { gameNames } from './types'
 import type { GameId, PlayerProfile, ResultInput, Route } from './types'
@@ -42,6 +43,7 @@ export default function App() {
   const [active, setActive] = useState(false)
   const [player, setPlayer] = useState<PlayerProfile | null>(null)
   const playerRef = useRef<PlayerProfile | null>(null)
+  const checkInVersion = useRef(0)
   const [checkIn, setCheckIn] = useState(false)
   const pendingStart = useRef<PendingRound | null>(null)
   const seenGuides = useRef(new Set<GameId>())
@@ -52,7 +54,9 @@ export default function App() {
   const online = useNetwork()
   const offline = useOfflineCache()
   const scores = useScores()
+  const shared = useSharedScores()
   const saveResult = scores.record
+  const publishResult = shared.publish
   const release = document.documentElement.dataset.release !== 'dev'
   const localFile = location.protocol === 'file:'
 
@@ -61,6 +65,7 @@ export default function App() {
       setRoute(readRoute())
       pendingStart.current = null
       setCheckIn(false)
+      checkInVersion.current++
       setGuide(null)
       window.scrollTo(0, 0)
       main.current?.focus({ preventScroll: true })
@@ -78,8 +83,9 @@ export default function App() {
   }
   const recordResult = useCallback((result: ResultInput) => {
     saveResult(result, playerRef.current ?? undefined)
+    if (playerRef.current) publishResult(result, playerRef.current)
     setLastResult(result)
-  }, [saveResult])
+  }, [saveResult, publishResult])
   const prepareRound = useCallback((pending: PendingRound) => {
     if (!seenGuides.current.has(pending.game)) setGuide({ game: pending.game, pendingRound: true })
     else {
@@ -106,11 +112,20 @@ export default function App() {
     seenGuides.current.clear()
     setGuide(null)
     setCheckIn(true)
+    checkInVersion.current++
   }
-  const gameProps = { onResult: recordResult, onActive: setActive, onStart: beginRound }
+  function finishCheckIn(profile: PlayerProfile) {
+    playerRef.current = profile
+    seenGuides.current.clear()
+    setPlayer(profile)
+    setCheckIn(false)
+    const pending = pendingStart.current
+    if (pending) prepareRound(pending)
+  }
+  const gameProps = { onResult: recordResult, onActive: setActive, onStart: beginRound, shared: shared.enabled }
   const isGame = games.some((game) => game.id === route)
 
-  return <div className="app-shell">
+  return <div className={`app-shell${shared.enabled ? ' has-shared-board' : ''}`}>
     <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); main.current?.focus() }}>Skip to game</a>
     <header className="site-header"><div className="header-inner">
       <a className="brand" href="#/home" aria-label="JTC AI Playground home"><span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span><span className="brand-word">Microsoft<span>JTC AI PLAYGROUND</span></span></a>
@@ -127,6 +142,12 @@ export default function App() {
     </nav></div>
     {offline.waiting && <div className="update-notice notice"><span>A new offline release is ready. {active ? 'Finish this round before updating.' : 'Update between visitors.'}</span><button className="text-button" disabled={active || checkIn || guide !== null} onClick={offline.applyUpdate}>Load update</button></div>}
     {scores.warning && <div className="storage-notice notice notice-warning" role="status">{scores.warning}</div>}
+    {shared.enabled && <div className={`shared-status notice${shared.error || shared.submissionError ? ' notice-warning' : ''}`} role="status">
+      <Cloud size={18} /><div><strong>{shared.status === 'online' ? 'Shared leaderboard connected' : shared.status === 'loading' ? 'Connecting to the shared leaderboard...' : 'Shared leaderboard connection unavailable'}</strong>
+        <p>{shared.pending ? `${shared.pending} score upload(s) awaiting confirmation. Keep this tab open and retry. ` : 'Nicknames and best scores are shared. Each device has its own player. '}
+          {shared.submissionError || shared.error || (shared.refreshedAt ? 'Refreshes automatically every 10 seconds.' : '')}</p>
+      </div><button className="text-button" onClick={shared.retry}>{shared.pending ? 'Retry sync' : 'Refresh board'}</button>
+    </div>}
     <main id="main-content" ref={main} tabIndex={-1} className="main-content">
       <div className="event-line"><span>MICROSOFT BOOTH <span className="separator">/</span> JTC AI &amp; ANALYTICS DAY</span>
         <div className="booth-player-tools">
@@ -146,12 +167,12 @@ export default function App() {
       {route === 'quiz' && <Quiz key={`quiz-${session}`} {...gameProps} />}
       {route === 'singlish' && <Singlish key={`singlish-${session}`} {...gameProps} />}
       {isGame && lastResult && !active && <div className="player-result-actions">
-        <span><Trophy size={20} /><strong>{player?.nickname}</strong>, you're on the board.</span>
+        <span><Trophy size={20} /><strong>{player?.nickname}</strong>{shared.enabled ? ', your result is saved on this device. Shared upload status is shown above.' : ", you're on the board."}</span>
         <a className="button button-secondary" href={leaderboardUrl(lastResult.game, lastResult.variant)}><Trophy size={17} />View leaderboard</a>
         <button className="button button-primary" onClick={nextPlayer}><UserRoundPlus size={17} />Next player</button>
       </div>}
-      {route === 'join' && <JoinQuiz dark={dark} />}
-      {route === 'scores' && <LocalScores results={scores.results} onClear={() => {
+      {route === 'join' && <JoinQuiz dark={dark} shared={shared.enabled} />}
+      {route === 'scores' && <LocalScores results={scores.results} shared={shared} onClear={() => {
         scores.clear()
         playerRef.current = null
         setPlayer(null)
@@ -173,7 +194,7 @@ export default function App() {
         <div className="game-heading"><div><div className="eyebrow"><BookOpen size={15} /> BOOTH HOST GUIDE</div><h1>Keep the booth flowing.</h1><p>One laptop, one phone, four good conversation starters.</p></div><Tag subtle>No account connection needed</Tag></div>
         <div className="host-grid">
           <article className="panel host-card"><span className="step-number">01</span><h2>Lead with the evidence hunt.</h2><p>Open Beat the Agent on the laptop. Give the visitor the context, then let them start the clock. Reward a correct, sourced answer, not just speed.</p><a className="text-link" href="#/beat">Open the main game<ArrowRight size={16} /></a></article>
-          <article className="panel host-card"><span className="step-number">02</span><h2>Let the queue play.</h2><p>Open the Quiz QR page on your phone. Visitors scan it using their own mobile data and show you their result. Phone and laptop scores do not sync.</p><a className="text-link" href="#/join">Show the QR code<ArrowRight size={16} /></a></article>
+          <article className="panel host-card"><span className="step-number">02</span><h2>Let the queue play.</h2><p>Open the Quiz QR page on your phone. Visitors scan it using mobile data and check in independently. Online shared check-ins publish their best scores to the same board.</p><a className="text-link" href="#/join">Show the QR code<ArrowRight size={16} /></a></article>
           <article className="panel host-card"><span className="step-number">03</span><h2>Switch the pace.</h2><p>Use Singlish for a shared laugh, or Spot the Drift for a quick reaction challenge. In the drift game, some rounds are healthy: waiting is a valid move.</p><a className="text-link" href="#/singlish">Try a Singlish phrase<ArrowRight size={16} /></a></article>
           <article className="panel host-card"><span className="step-number">04</span><h2>Bring it back to the story.</h2><p>Mei checks records and drafts notices. Chloe spots emerging facilities issues. Connected information helps both; the officer still decides.</p><span className="host-close">"The officer decides. Copilot did the legwork."</span></article>
         </div>
@@ -183,25 +204,25 @@ export default function App() {
           {localFile && <p className="notice"><Check size={17} />You are using the standalone offline copy. Voice and clipboard features may be unavailable here.</p>}
           <p><strong>Voice:</strong> rehearse the microphone in the actual booth browser. Permission or service failure must never block typed/preset play. Browser speech may process audio online; use fictional phrases.</p>
           <p><strong>Optional Copilot:</strong> use your already-approved session/account. Copy the full synthetic prompt pack from the game. Check citations and uncertainty. The game has no AI API connection and never sends messages.</p>
-          <p><strong>Players:</strong> each visitor can choose an optional nickname before playing, or continue as a guest. Use Next player between visitors to reset the game and avoid assigning someone else's score to the last player. Only the best attempt per player and case appears on the leaderboard.</p>
+          <p><strong>Players:</strong> each device checks visitors in independently. Online shared check-in publishes a nickname and best result per game/case to one public board. Use Next player between visitors; it never changes the player on someone else's device. Identical nicknames are separate people, not a way to log in as someone else.</p>
           <p><strong>How to play:</strong> each new player gets a short silent walkthrough before their first round of each game. Skip it or watch the three steps, then choose Got it. The game clock starts only after that. How to play replays the guide between rounds; Next player resets all four guides. Practice demos never earn scores or use the microphone. Reduced-motion mode uses manual still frames.</p>
-          <p><strong>Reset:</strong> leaving a game cancels the current attempt. Nicknames and scores persist only in this browser; clear them from Leaderboard at the end of the event. The active player is forgotten on reload.</p>
-          <p><strong>Privacy:</strong> a nickname is optional and is saved locally with game results, never uploaded. Please avoid real names or personal details. No sign-in, contact details, webcam, app analytics, or transcripts are collected. The hosting provider may retain standard access/security logs. Scores are informal, not tamper-proof.</p>
+          <p><strong>Offline and sync:</strong> the standalone file and local previews use device-only play. The hosted shared board needs internet. Failed uploads remain pending while this tab is open; use Retry sync. Local-only players and old device history are never uploaded automatically. Reloading loses pending uploads and the active player; local results remain.</p>
+          <p><strong>Reset:</strong> Clear this device's scores clears local history, not the public shared board or already-submitted scores. Administrative shared-board cleanup requires the host's Azure account. Sessions expire after 24 hours; public reads show the last seven days. The host must remove cloud records after the event.</p>
+          <p><strong>Privacy:</strong> shared check-in explicitly discloses public nicknames/scores before upload. Prefer a nickname and avoid personal details; a local-only option remains available. No email, webcam, audio or transcript is uploaded by the scoreboard. Azure monitoring and hosting providers may retain standard service/access logs. Scores are informal, not tamper-proof.</p>
           <p><strong>Demonstration:</strong> all people, documents, figures and telemetry are fictional. This is not a production JTC system, an operational alarm, or a connected Microsoft service.</p>
           <p className="helper">This guide is public and changes only this device's experience. It is not an authenticated administrator panel.</p>
         </div>
       </section>}
       {route === 'not-found' && <section className="panel empty-state"><h1>That game link went missing.</h1><p>No mystery to solve here. Choose a game from the playground.</p><a className="button button-primary" href="#/home">Back to the playground<ArrowRight size={18} /></a></section>}
     </main>
-    {checkIn && <PlayerCheckIn guestName={nextGuestName(scores.results)} onCancel={() => { pendingStart.current = null; setCheckIn(false) }} onJoin={(nickname) => {
-      const profile = { id: attemptId(), nickname }
-      playerRef.current = profile
-      seenGuides.current.clear()
-      setPlayer(profile)
-      setCheckIn(false)
-      const pending = pendingStart.current
-      if (pending) prepareRound(pending)
-    }} />}
+    {checkIn && <PlayerCheckIn guestName={nextGuestName(scores.results)} shared={shared.enabled}
+      onCancel={() => { checkInVersion.current++; pendingStart.current = null; setCheckIn(false) }}
+      onLocalJoin={(nickname) => finishCheckIn({ id: attemptId(), nickname })}
+      onJoin={async (nickname) => {
+        const version = checkInVersion.current
+        const profile = shared.enabled ? await shared.join(nickname) : { id: attemptId(), nickname }
+        if (version === checkInVersion.current) finishCheckIn(profile)
+      }} />}
     {guide && <GameplayGuide game={guide.game} pendingRound={guide.pendingRound} onCancel={() => {
       pendingStart.current = null
       setGuide(null)

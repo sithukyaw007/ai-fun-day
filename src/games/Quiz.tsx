@@ -7,7 +7,7 @@ import { useRoundActivity } from '../lib/hooks'
 import type { GameProps } from '../lib/hooks'
 import { attemptId } from '../lib/scoring'
 
-export default function Quiz({ onResult, onActive, onStart }: GameProps) {
+export default function Quiz({ onResult, onActive, onStart, shared = false }: GameProps) {
   const [phase, setPhase] = useState<'ready' | 'playing' | 'done'>('ready')
   const [index, setIndex] = useState(0)
   const [responses, setResponses] = useState<(boolean | null)[]>(quizQuestions.map(() => null))
@@ -51,7 +51,7 @@ export default function Quiz({ onResult, onActive, onStart }: GameProps) {
       <h2>Can, or cannot?</h2>
       <p>Eight quick calls. Tap <strong>Can!</strong> or <strong>Aiyoh!</strong><br />Trust your instincts. Check the facts.</p>
       <button className="button button-primary" onClick={() => onStart(start)}>Let's play<ArrowRight size={18} /></button>
-      <p className="helper">Optional nickname. No sign-in. Scores stay here.<br />Show your result to the booth host.</p>
+      <p className="helper">{shared ? 'Optional nickname. Online scores join the shared board.' : 'Optional nickname. No sign-in. Scores stay here.'}<br />Show your result to the booth host.</p>
     </div> : phase === 'playing' ? <div className="quiz-card panel">
       <div className="quiz-progress" aria-label={`Question ${index + 1} of ${quizQuestions.length}`}>
         {quizQuestions.map((item, i) => <span key={item.id} className={i < index ? 'complete' : i === index ? 'current' : ''} />)}
@@ -85,7 +85,7 @@ export default function Quiz({ onResult, onActive, onStart }: GameProps) {
         <button className="button button-primary" onClick={() => onStart(start)}><RotateCcw size={17} />Play again</button>
         <a className="text-link" href="#/beat">Try Mei's evidence hunt<ArrowRight size={16} /></a>
       </div>
-      <p className="helper centered">Your score stays on this device. Nothing is synced to the laptop.</p>
+      <p className="helper centered">{shared ? 'Shared check-ins upload the best score across devices. Check the sync status above; local-only play stays here.' : 'Your score stays on this device. Nothing is synced to the laptop.'}</p>
     </div>}
   </section>
 }

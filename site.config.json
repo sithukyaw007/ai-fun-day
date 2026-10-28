@@ -1,3 +1,4 @@
 {
-  "publicUrl": "https://sithukyaw007.github.io/ai-fun-day/"
+  "publicUrl": "https://sithukyaw007.github.io/ai-fun-day/",
+  "apiUrl": "https://func-api-j46cwvlkqvemm.azurewebsites.net/api/scoreboard"
 }

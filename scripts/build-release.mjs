@@ -4,7 +4,8 @@ import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const root = process.cwd()
-const { publicUrl } = JSON.parse(await readFile('site.config.json', 'utf8'))
+const { publicUrl, apiUrl = '' } = JSON.parse(await readFile('site.config.json', 'utf8'))
+if (apiUrl && (new URL(apiUrl).protocol !== 'https:' || new URL(apiUrl).username || new URL(apiUrl).password)) throw new Error('API URL must use HTTPS without credentials.')
 if (publicUrl) {
   const url = new URL(publicUrl)
   if (url.protocol !== 'https:' || url.username || url.password) {
@@ -18,10 +19,11 @@ execFileSync(path.join(root, 'node_modules/.bin/parcel'), [
 const inline = execFileSync(path.join(root, 'node_modules/.bin/html-inline'), [
   '.artifact-build/index.html',
 ], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
-const release = createHash('sha256').update(inline).update(publicUrl).digest('hex').slice(0, 12)
+const release = createHash('sha256').update(inline).update(publicUrl).update(apiUrl).digest('hex').slice(0, 12)
 const html = inline
   .replace(/\bdata-release=(?:"dev"|'dev'|dev)(?=[\s>])/, `data-release="${release}"`)
   .replace('__PUBLIC_URL__', publicUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;'))
+  .replace('__API_URL__', apiUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;'))
 
 if (!html.includes(`data-release="${release}"`)) throw new Error('The HTML release identifier was not injected.')
 for (const tag of html.match(/<(?:script|link)\b[^>]*>/gi) ?? []) {

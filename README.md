@@ -1,6 +1,6 @@
 # JTC AI Playground
 
-Four browser games for the Microsoft booth at JTC AI & Analytics Day. Fictional estate stories connect Mei's lease/tenant work with Chloe's facilities monitoring. No live JTC systems, AI API keys, sign-in, contact collection, or backend are required.
+Four browser games for the Microsoft booth at JTC AI & Analytics Day. Fictional estate stories connect Mei's lease/tenant work with Chloe's facilities monitoring. The hosted app uses a dedicated Azure scoreboard for shared nicknames and best scores; all games also work in device-only mode. No live JTC systems, AI API keys, sign-in, or contact collection is required.
 
 ## Launch links
 
@@ -12,7 +12,7 @@ Four browser games for the Microsoft booth at JTC AI & Analytics Day. Fictional 
 | All four games | [Game gallery](https://sithukyaw007.github.io/ai-fun-day/#/home) |
 | Cold-start laptop backup | [Download the standalone HTML](https://sithukyaw007.github.io/ai-fun-day/booth-offline.html) |
 | Operating notes | [Host guide and privacy](https://sithukyaw007.github.io/ai-fun-day/#/host) |
-| Nickname leaderboard | [This device's best players](https://sithukyaw007.github.io/ai-fun-day/#/scores) |
+| Nickname leaderboard | [Shared booth leaderboard](https://sithukyaw007.github.io/ai-fun-day/#/scores) |
 
 ## Games
 
@@ -65,7 +65,7 @@ Use the in-app **Host guide & privacy** page for operation and reset instruction
 
 Before the first round, a check-in screen asks for an optional name/nickname. Prefer a nickname; blank input or the guest button creates a guest label. The game clock starts only after check-in is complete. Use **Next player** between visitors: it resets the game and opens a fresh check-in rather than reusing the previous visitor's name. Changing player is disabled during an active round.
 
-The current player is kept in memory only and forgotten on reload. Completed results retain the chosen nickname locally. Replaying under the same player keeps only that player's best attempt on each case's leaderboard; people who choose the same nickname are not merged.
+The current player is kept in memory only and forgotten on reload. Each device checks in independently, and changing player does not change anyone else's screen. Online check-in explicitly discloses public nickname/score sharing before creating a short-lived player session. **Play on this device only** remains available. Replaying under the same player keeps only their best result per case; identical nicknames are not merged or treated as account credentials.
 
 Beat the Agent opens visual service maps, tenant cards, status checklists, bid bars and lease-calendar cards instead of spreadsheet tables. Pin a card to cite its exact source row; **Read original source** expands the unabridged evidence. Quiz questions and Singlish scenarios have local inline illustrations, and drift gameplay includes the plant/room alongside the live chart. Longer mission briefs, reasoning and quiz explanations are available on demand. No image or diagram service is contacted.
 
@@ -101,11 +101,15 @@ Rehearse microphone permissions, Singapore-English recognition, and the approved
 
 ### Scores and privacy
 
-Optional nicknames or labels such as `Guest 001` appear on the **Leaderboard**, including a top-three podium and top-ten table. The latest 200 attempts are stored only in this browser under `jtc-playground-results-v1`; each variant shows one best attempt per player. Beat the Agent complete, on-time, evidenced answers rank before practice attempts. Different cases/phrases/sensors are kept separate. Legacy `Player 001` scores are preserved.
+The hosted **Leaderboard** defaults to **Shared board**, with a top-three podium and top-ten table for each game/case. It refreshes every ten seconds while the tab is visible, and **Refresh board** updates it immediately. Each server-issued player session can publish only its own nickname and best result. Conditional Table Storage writes prevent a slower concurrent submission from replacing a better score.
 
-Phones never sync scores to the laptop. The hosted site and standalone file also have separate browser storage; stay on the cached hosted site to keep the same board offline. Nicknames and scores are never uploaded or placed in share URLs. Avoid real names or personal details. Results and replay are informal and not tamper-proof; public source includes answer keys. No sign-in, contact details, webcam, app analytics, or lead list is collected. Storage denial is explicitly reported and leaves session-only play available.
+**This device** shows the latest 200 local attempts under `jtc-playground-results-v1`. Legacy scores are preserved and are **not uploaded automatically**. Local-only players, downloaded files, and HTTP development previews use local storage only. The hosted and downloaded copies have separate browser storage. Shared failures never silently masquerade as an empty successful board: status and retry controls remain visible, and the last confirmed board may be stale.
 
-Clear nicknames and scores through **Leaderboard > Clear this device's scores**, then confirm. Clear each used device independently after the event. Browser speech and a manually used external Copilot session have their own provider processing policies. GitHub Pages may retain standard access/security logs.
+Uploads retry idempotently when connectivity returns or **Retry sync** is clicked. Keep the tab open while results are pending: player tokens and pending submissions are memory-only and are lost on reload/closure; local history remains. Tokens expire after 24 hours. Old local-only results cannot be attached to a different shared identity by replaying them.
+
+Use nicknames, not personal details. Public nicknames and scores can be seen by anyone visiting the shared board. No email, webcam, audio, transcript, or browser analytics are sent to the scoreboard. Results are friendly, low-trust competition, **not tamper-proof prize verification**: the client game and answer keys are public. Azure monitoring and hosting providers may retain normal service/access logs.
+
+**Clear this device's scores** clears local history and the current player, not the public shared board or already-submitted scores. Administrative shared-data removal requires Azure operator access; no public reset/delete control or admin key exists in the frontend. Public reads exclude scores older than seven days, but this is not physical deletion: the host must remove cloud records after the event, and remove the dedicated resource group when no longer needed to stop ongoing private-endpoint/monitoring/storage charges. Do not delete the resource group until the host explicitly approves it.
 
 All people, tenants, documents, amounts and sensor readings in the games are fictional. Thresholds and impact lines are illustrative game rules, not operational or safety advice. The source presentation is not included in the repository or release.
 
@@ -116,6 +120,8 @@ npm test
 npm run build
 npm run lint
 npm run test:e2e
+npm ci --prefix api
+npm test --prefix api
 ```
 
 If Playwright reports that its browser is missing, install Chromium with `npx playwright install chromium` and rerun. Browser checks cover the four evidence cases, quiz scoring, drift controls/all-clear, voice consent/errors/cleanup, QR image decoding, standalone/cached offline use, storage failures, mobile overflow, and accessibility.
@@ -137,6 +143,23 @@ The Pages URL is resolved from GitHub's Pages API, not inferred from a local pre
 
 ## Implementation
 
-React, TypeScript, Vite development server, Parcel/HTML inlining, Lucide icons, and local QR generation. The required Clawpilot design tokens provide light/dark presentation, including the `?scoutTheme=light` or `?scoutTheme=dark` override. Browser routes use hashes to work under a Pages project path without rewrites.
+React, TypeScript, Vite development server, Parcel/HTML inlining, Lucide icons, and local QR generation. Light is the default even when the device uses dark appearance. The theme toggle and explicit `?scoutTheme=dark` override are retained. Browser routes use hashes to work under a Pages project path without rewrites.
 
-Content lives in `src/data/`; scoring, detection, sharing, and prompt formatting are pure helpers in `src/lib/`. A service worker caches only the self-contained entry point under this project's scope. No external runtime data is fetched.
+Content lives in `src/data/`; scoring, detection, sharing, and prompt formatting are in `src/lib/`. A service worker caches only the self-contained entry point, not API responses or player tokens. Gameplay assets are inline; the hosted shared scoreboard fetches only the configured Azure API. Do not point the public build at a database or embed any database key.
+
+### Azure backend
+
+`api/` uses Azure Functions v4 on Node.js 24 and Azure Table Storage. Infrastructure in `infra/` derives from the official `Azure-Samples/functions-quickstart-javascript-azd` v1.0.0 template. The isolated `rg-jtc-scoreboard-sea` resource group is in Southeast Asia. Flex Consumption uses 512 MB instances, zero always-ready instances and a ten-instance maximum. A user-assigned managed identity has resource-scoped blob/table data roles; shared-key storage access is disabled.
+
+The subscription's inherited MCAPS governance policy requires private storage. The approved deployment therefore uses a dedicated VNet, function integration, and blob/table private endpoints with private DNS. These have ongoing charges even when no one is playing. Do not remove the policy or enable storage keys to work around deployment errors.
+
+Endpoints under the configured `site.config.json.apiUrl`:
+
+- `GET /health`: process health.
+- `POST /players`: explicit nickname check-in; returns a private, memory-only player token.
+- `POST /scores`: authenticated, validated best-score submission; no client-supplied identity allowed.
+- `GET /scores`: public top-ten results per case, with no private tokens.
+
+The API is intended for a public, informal booth event, not authentication or prize adjudication. It validates game IDs, score ranges, timing bounds and nickname content; conditional writes handle concurrent/retried submissions. A soft per-instance throttle bounds request bursts, but is not a distributed anti-abuse service.
+
+Provisioning uses the validated subscription-scope `infra/main.bicep` and `infra/main.parameters.json`. Application deployment packages only `api/` with production dependencies, then uploads it to the resolved Function App with Azure CLI. Record changes in `.azure/deployment-plan.md`; validate/what-if before deployment. `site.config.json.apiUrl` is public routing configuration, never a secret.

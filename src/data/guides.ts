@@ -23,7 +23,7 @@ export const gameGuides: Record<GameId, { hint: string; steps: GuideStep[] }> = 
     ],
   },
   quiz: {
-    hint: 'Eight claims. No countdown. Show your final result to the host; scores stay on your device.',
+    hint: 'Eight claims. No countdown. Show your result to the host. Online shared check-ins also publish to the shared board.',
     steps: [
       { title: 'Read one quick claim.', description: 'Look at the illustration and claim. Decide whether it is sound advice or an AI misconception.' },
       { title: 'Can, or Aiyoh?', description: 'Tap Can! if the claim checks out, or Aiyoh! if it does not. One answer per claim.' },

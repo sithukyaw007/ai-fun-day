@@ -114,7 +114,7 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
       {phase === 'done' && result && <ResultBadge score={result.score} max={100} perfect={result.perfect}
         title={result.perfect ? 'Case cracked. Evidence and all.' : !result.withinTime ? 'Time up. Let the evidence talk.' : 'Good hunt. A few clues got away.'}>
         <p>{result.correctCount}/{challenge.correctIds.length} correct selections{result.wrongCount ? `, ${result.wrongCount} extra` : ''} · {result.citedCount}/{challenge.requiredEvidence.length} required source rows cited.</p>
-        <p>{result.perfect ? 'Complete and on time. Saved to this device’s leaderboard.' : 'Practice score saved. Complete, on-time answers rank first.'}</p>
+        <p>{result.perfect ? 'Complete and on time. Check the leaderboard and upload status.' : 'Practice score saved. Complete, on-time answers rank first.'}</p>
       </ResultBadge>}
       <div className="case-workspace">
         <EvidenceBrowser files={challenge.files} activeId={activeFile} onFile={setActiveFile} selected={evidence}

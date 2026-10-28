@@ -5,8 +5,7 @@
     <script>
       (() => {
         const param = new URLSearchParams(window.location.search).get("scoutTheme");
-        const theme =
-          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        const theme = param === "dark" ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
       })();
     </script>
@@ -14,6 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Four little challenges. One connected estate. Play the Microsoft booth games for JTC AI &amp; Analytics Day." />
     <meta name="booth-public-url" content="__PUBLIC_URL__" />
+    <meta name="booth-api-url" content="__API_URL__" />
     <title>JTC AI Playground | Microsoft booth</title>
   </head>
   <body>

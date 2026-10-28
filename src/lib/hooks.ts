@@ -5,6 +5,7 @@ export interface GameProps {
   onResult: (result: ResultInput) => void
   onActive: (active: boolean) => void
   onStart: (start: () => void) => void
+  shared?: boolean
 }
 
 export function useRoundActivity(onActive: GameProps['onActive'], active: boolean) {
