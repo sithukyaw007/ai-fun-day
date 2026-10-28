@@ -130,6 +130,22 @@ storage connection. The public site's API configuration now uses the verified
 hostname. Final checks passed: 3 backend tests, 18 client unit tests, 30 browser
 tests, TypeScript build and lint. The GitHub Pages frontend remains the same URL.
 
+## Final browser verification
+
+The deployed Functions host required its own CORS allowlist in addition to the
+handler's CORS headers: its initial preflight interception omitted the origin.
+Configured the approved GitHub origin at the platform and persisted the setting
+in the Bicep siteConfig. Actual OPTIONS now returns the expected origin, POST
+method and content-type/authorization headers.
+
+After propagation, two real, independent Chromium laptop/phone contexts used the
+public Pages URL, checked in concurrently, submitted zero-point labelled setup
+scores and each read both names from Azure. Their active player names stayed
+independent. Both began in light mode despite dark operating-system appearance.
+The downloaded HTML and hosted HTML match the verified build byte-for-byte.
+The zero-point `Setup laptop` and `Setup phone` checks are confined to the noisy-lift
+practice case alongside the earlier setup records.
+
 ## Delivery
 
 1. Select the consumption hosting recipe and verify regional availability.

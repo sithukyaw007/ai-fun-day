@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "check:api": "node scripts/check-api.mjs",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {

@@ -97,6 +97,12 @@ module api 'br/public:avm/res/web/site:0.15.1' = {
     }
     siteConfig: {
       alwaysOn: false
+      cors: {
+        allowedOrigins: [
+          'https://sithukyaw007.github.io'
+        ]
+        supportCredentials: false
+      }
     }
     virtualNetworkSubnetId: !empty(virtualNetworkSubnetId) ? virtualNetworkSubnetId : null
     appSettingsKeyValuePairs: allAppSettings

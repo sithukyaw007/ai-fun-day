@@ -122,6 +122,7 @@ npm run lint
 npm run test:e2e
 npm ci --prefix api
 npm test --prefix api
+npm run check:api
 ```
 
 If Playwright reports that its browser is missing, install Chromium with `npx playwright install chromium` and rerun. Browser checks cover the four evidence cases, quiz scoring, drift controls/all-clear, voice consent/errors/cleanup, QR image decoding, standalone/cached offline use, storage failures, mobile overflow, and accessibility.
@@ -161,5 +162,7 @@ Endpoints under the configured `site.config.json.apiUrl`:
 - `GET /scores`: public top-ten results per case, with no private tokens.
 
 The API is intended for a public, informal booth event, not authentication or prize adjudication. It validates game IDs, score ranges, timing bounds and nickname content; conditional writes handle concurrent/retried submissions. A soft per-instance throttle bounds request bursts, but is not a distributed anti-abuse service.
+
+Functions platform CORS and the API's own allowlist must both include `https://sithukyaw007.github.io`. The Functions host intercepts preflight requests, so application-level CORS headers alone are not sufficient. Verify a real browser check-in and an OPTIONS preflight with `Access-Control-Request-Method: POST` before marking a deployment ready.
 
 Provisioning uses the validated subscription-scope `infra/main.bicep` and `infra/main.parameters.json`. Application deployment packages only `api/` with production dependencies, then uploads it to the resolved Function App with Azure CLI. Record changes in `.azure/deployment-plan.md`; validate/what-if before deployment. `site.config.json.apiUrl` is public routing configuration, never a secret.
