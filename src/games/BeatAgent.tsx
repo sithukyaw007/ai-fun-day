@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowRight, CheckCheck, Clock3, Files, Infinity as InfinityIcon, RotateCcw, Search, ShieldCheck } from 'lucide-react'
 import { challenges } from '../data/challenges'
-import { GameHeading, LiveHandoff, PersonaNote, ResultBadge, Tag } from '../components/Common'
+import { GameHeading, PersonaNote, ResultBadge, Tag } from '../components/Common'
 import { EvidenceBrowser } from '../components/Evidence'
 import GameScene from '../components/GameScene'
-import { challengePrompt } from '../lib/handoff'
 import { useRoundActivity } from '../lib/hooks'
 import type { GameProps } from '../lib/hooks'
 import { attemptId, formatElapsed, scoreChallenge } from '../lib/scoring'
@@ -90,7 +89,7 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
             <span className="case-number">0{index + 1}</span><span><strong>{item.title}</strong><small>{item.shortTitle}</small></span><span className="selection-dot" aria-hidden="true" />
           </button>)}
           <button className="button button-primary button-wide" onClick={() => onStart(start)}>Open the case. Start the clock.<ArrowRight size={18} /></button>
-          <p className="helper">Prepared reference answers, not live AI. Optional live Copilot handoff after your round.</p>
+          <p className="helper">Compare your answer with a prepared, source-backed reference after your round. Not live AI.</p>
         </div>
       </div>
       <PersonaNote name="Mei">A lease question can mean chasing records across systems. Here, you feel the friction before seeing a source-backed answer.</PersonaNote>
@@ -137,7 +136,6 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
         }}><ShieldCheck size={13} />{ref}</button>)}</div>
         <p className="helper">Click a citation to reveal its actual supporting row. This is authored demo content; no response time is attributed to an agent.</p>
       </div>}
-      {phase === 'done' && <LiveHandoff prompt={challengePrompt(challenge)} stopwatch />}
     </>}
   </section>
 }

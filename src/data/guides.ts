@@ -31,7 +31,7 @@ export const gameGuides: Record<GameId, { hint: string; steps: GuideStep[] }> = 
     ],
   },
   singlish: {
-    hint: 'Prepared phrase cards, not live AI. Voice is optional and needs consent; unfamiliar text can use the live Copilot handoff.',
+    hint: 'Prepared phrase cards, not live AI. Voice is optional and needs consent. If text is unfamiliar, choose a phrase card or edit the transcript.',
     steps: [
       { title: 'Borrow a line.', description: 'Choose a phrase card, or type or say a matching phrase. Review your text, then find the boardroom match.' },
       { title: 'Keep the meaning.', description: 'Choose the professional rewrite that keeps the original facts and uncertainty.' },

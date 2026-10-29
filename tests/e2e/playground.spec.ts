@@ -29,6 +29,7 @@ async function preparePlayer(page: Page, nickname = 'ChillerChamp') {
 test('all four evidence cases can be won with genuine citations', async ({ page }) => {
   await page.goto('./')
   await expect(page.getByRole('heading', { name: 'Beat the Agent', exact: true })).toBeVisible()
+  await expect(page.getByText(/Optional live Copilot handoff/)).toHaveCount(0)
   await preparePlayer(page)
   for (const challenge of challenges) {
     await page.locator('.challenge-option').filter({ hasText: challenge.title }).click()
@@ -48,6 +49,8 @@ test('all four evidence cases can be won with genuine citations', async ({ page 
     await page.getByRole('button', { name: ref, exact: true }).click()
     await expect(page.locator(`[id="source-${ref}"]`)).toHaveClass(/source-highlight/)
     await expect(page.getByText('Not live AI', { exact: true })).toBeVisible()
+    await expect(page.locator('.live-handoff')).toHaveCount(0)
+    await expect(page.getByText('Try a genuinely live Copilot comparison', { exact: true })).toHaveCount(0)
     await page.getByRole('button', { name: 'Choose another case' }).click()
   }
   const saved = await results(page)
@@ -134,6 +137,7 @@ test('spacebar and touch alarms work, and a healthy round rewards patience', asy
 
 test('Singlish rewrites keep meaning and unmatched text does not get fake AI output', async ({ page }) => {
   await page.goto('./#/singlish')
+  await expect(page.locator('.live-handoff')).toHaveCount(0)
   await preparePlayer(page)
   await page.getByRole('button', { name: 'Find the boardroom match' }).click()
   await expect(page.locator('.rewrite-panel')).toBeFocused()
@@ -146,8 +150,13 @@ test('Singlish rewrites keep meaning and unmatched text does not get fake AI out
   await page.getByRole('button', { name: 'Find the boardroom match' }).click()
   await expect(page.getByText(/No prepared rewrite matches/)).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Boardroom, not bored-room.' })).toHaveCount(0)
-  await page.getByText('Try a genuinely live Copilot comparison').click()
-  await expect(page.getByText(/No AI service is connected to this hub/)).toBeVisible()
+  await expect(page.getByText('Try a genuinely live Copilot comparison', { exact: true })).toHaveCount(0)
+  await expect(page.getByText(/Choose a phrase card, or edit the transcript/)).toBeVisible()
+  await expect(page.getByText(/Copilot handoff/)).toHaveCount(0)
+  await page.getByRole('button', { name: /The aircon complaint/ }).click()
+  await page.getByRole('button', { name: 'Find the boardroom match', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Boardroom, not bored-room.', exact: true })).toBeVisible()
+  await expect(page.locator('.live-handoff')).toHaveCount(0)
 })
 
 test('voice is opt-in, transcripts are editable, and navigation aborts recognition', async ({ page }) => {

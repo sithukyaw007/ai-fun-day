@@ -97,13 +97,13 @@ Open the public site online once and wait for **Offline copy cached on this devi
 
 First-time QR visitors still need connectivity. A downloaded file on the laptop does not serve phones. Download the standalone copy while online, before the event; keep it on the laptop. New cached releases are offered explicitly, and the update button is disabled during an active round.
 
-### Live Copilot handoff
+### Tablet demo without a live Copilot session
 
-This app does **not** connect to Copilot, Fabric, Foundry, or a language-model API. After a case, expand **Try a genuinely live Copilot comparison**, copy the complete fictional source pack, and paste it into your existing, approved Copilot session/account.
+This app does **not** connect to Copilot, Fabric, Foundry, or a language-model API. The **Try a genuinely live Copilot comparison** section is hidden in both Beat the Agent and Singlish to Boardroom because no Copilot session is available on the guest tablet.
 
-Verify the answer and citations. Any operator stopwatch includes the copy/paste handoff, is not a benchmark, and does not enter the leaderboard. Never attribute a simulated or prepared answer's speed to a live agent.
+Beat the Agent still reveals a **prepared reference answer** with its original source citations after submission. Singlish still gives prepared rewrites and meaning-preserving feedback. These remain explicitly labelled as authored examples, not live AI responses. No external Copilot handoff or comparison stopwatch is shown.
 
-For Singlish, offline rewrites exist only for the eight phrase cards. Punctuation/case/spacing differences are normalised, but unmatched text does not receive a fake generated answer. Edit the transcript, select a preset, or copy it to the optional live handoff.
+For Singlish, rewrites exist only for the eight phrase cards. Punctuation/case/spacing differences are normalised, but unmatched text does not receive a fake generated answer. Edit the transcript to match a prepared phrase or choose a phrase card; the screen does not direct guests to an unavailable service.
 
 ### Microphone
 
@@ -111,7 +111,7 @@ Voice is a progressive enhancement using browser speech recognition, requested o
 
 Recognition prefers `en-SG` and may be unsupported, denied, or transcribe a phrase differently. Review/edit the transcript before finding a match. Typed/preset play always remains available. Recognition stops on navigation, cancellation, round completion, or the voice timeout.
 
-Rehearse microphone permissions, Singapore-English recognition, and the approved signed-in Copilot account on the actual booth hardware. Automated tests mock those services; they cannot establish the host's account policy or real microphone availability.
+Rehearse microphone permissions and Singapore-English recognition on the actual booth hardware. Automated tests mock the speech service; they cannot establish real microphone availability. No signed-in Copilot account is needed for these games.
 
 ### Scores and privacy
 

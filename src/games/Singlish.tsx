@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowDownUp, ArrowRight, Banknote, Check, Fan, Gavel, MessageSquareQuote, Mic, MicOff, RotateCcw, Sun, UsersRound, Wind, Zap } from 'lucide-react'
-import { GameHeading, LiveHandoff, PersonaNote, Tag } from '../components/Common'
+import { GameHeading, PersonaNote, Tag } from '../components/Common'
 import { phraseCards } from '../data/phrases'
 import { attemptId, findPhrase } from '../lib/scoring'
-import { singlishPrompt } from '../lib/handoff'
 import { speechConstructor, speechError } from '../lib/speech'
 import type { SpeechRecognitionLike } from '../lib/speech'
 import { useRoundActivity } from '../lib/hooks'
@@ -115,7 +114,7 @@ export default function Singlish({ onResult, onActive, onStart }: GameProps) {
     if (!found) {
       setCard(null)
       setUnmatched(true)
-      setStatus(input.trim() ? 'No prepared rewrite matches this text. Choose a preset, edit the transcript, or use the optional live Copilot handoff below.' : 'Please enter a fictional phrase or choose a preset.')
+      setStatus(input.trim() ? 'No prepared rewrite matches this text. Choose a phrase card, or edit the transcript to match one of the prepared phrases.' : 'Please enter a fictional phrase or choose a preset.')
       return
     }
     onStart(() => {
@@ -165,7 +164,7 @@ export default function Singlish({ onResult, onActive, onStart }: GameProps) {
         </div>
         {status && <p className={`notice${unmatched ? ' notice-warning' : ''}`} role="status">{status}</p>}
         <button className="button button-primary button-wide" onClick={handleMatch} disabled={listening}>Find the boardroom match<ArrowRight size={17} /></button>
-        <p className="helper">Prepared phrase cards, not live AI. New text: use the Copilot handoff.</p>
+        <p className="helper">Prepared phrase cards, not live AI. Choose a card to play; unfamiliar text has no prepared rewrite.</p>
       </div>
       <aside className="preset-panel panel"><div className="section-label"><span>BORROW A LINE</span><span>8 phrase cards</span></div>
         <div className="phrase-presets">{phraseCards.map((item, index) => {
@@ -189,7 +188,6 @@ export default function Singlish({ onResult, onActive, onStart }: GameProps) {
         }}><RotateCcw size={16} />Try the next phrase</button>
       </div>}
     </div>}
-    {input.trim() && <LiveHandoff prompt={singlishPrompt(input.trim())} />}
     <PersonaNote name="Mei">A useful draft sounds professional without losing facts or making promises. Mei reviews it and decides whether to send.</PersonaNote>
   </section>
 }
