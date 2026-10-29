@@ -146,6 +146,50 @@ The downloaded HTML and hosted HTML match the verified build byte-for-byte.
 The zero-point `Setup laptop` and `Setup phone` checks are confined to the noisy-lift
 practice case alongside the earlier setup records.
 
+## Code-only update: untimed Beat the Agent
+
+The user requested removing Beat the Agent's 60-second countdown and automatic
+timeout. Replace it with a forward elapsed counter; complete-answer status and
+score depend on answer accuracy and evidence only. Keep elapsed time as the
+existing leaderboard tie-breaker, and leave all other games unchanged.
+
+This update changes only frontend code and the deployed Function's score
+validation. Remove the Beat-specific 60-second completeness gate and generic
+24-hour result-duration cutoff for Beat while retaining finite nonnegative
+time validation and normal session authentication. Do not change any Azure
+resources, policy, identity, network, region, endpoint, or shared records.
+Deploy the existing Function App code package before publishing the new frontend.
+Verify the existing resource/app/CORS settings read-only; no provisioning needed.
+
+### Code-only validation steps
+
+- Read existing Function runtime/host configuration and the verified deployment target.
+- Run backend score/session tests and frontend unit/build/lint checks.
+- Verify count-up beyond 60 seconds, manual submission, reset/navigation cleanup,
+  unchanged game scoring, responsive layouts and shared long-score publication.
+- Confirm resource-scoped managed identity, private networking and CORS have no code
+  or infrastructure changes in this update.
+- Package and deploy only existing `api/` application code, then run API/preflight
+  checks and publish the matching frontend. No ARM provisioning is required.
+
+### Code-only validation proof
+
+Client tests: 19 passed. Backend tests: 4 passed, including finite valid Beat
+durations of 60 seconds, 125 seconds and 48 hours, while rejecting invalid scores
+and times. TypeScript build and lint passed. Targeted browser checks passed for
+complete cited submissions after 125 seconds, no auto-timeout, timer stopping
+only on submission, reset and navigation cancellation, plus guide/layout checks.
+The shared-client browser test also submitted a fully correct 125-second attempt
+through the actual service validation and displayed it on the shared board.
+Existing health/storage/preflight checks passed. This is a code-only ZIP update;
+the resource target and data-plane roles remain unchanged.
+
+The code-only ZIP deployment completed successfully. Live health/storage/CORS
+checks passed. Complete Beat payloads with 125-second and 48-hour durations now
+pass score validation and reach the normal 401 authentication check when sent
+without a token (rather than the old 400 duration rejection). No shared test
+records, cloud resources, role assignments or settings were changed.
+
 ## Delivery
 
 1. Select the consumption hosting recipe and verify regional availability.

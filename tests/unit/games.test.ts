@@ -4,7 +4,7 @@ import { phraseCards } from '../../src/data/phrases'
 import { quizQuestions } from '../../src/data/quiz'
 import { detectDrift, makeDriftRound, scoreDrift, sensors } from '../../src/lib/drift'
 import { challengePrompt, singlishPrompt } from '../../src/lib/handoff'
-import { compareResults, exactSet, findPhrase, ROUND_MS, scoreChallenge } from '../../src/lib/scoring'
+import { compareResults, exactSet, findPhrase, formatElapsed, scoreChallenge } from '../../src/lib/scoring'
 import { quizUrl } from '../../src/lib/sharing'
 import { speechError } from '../../src/lib/speech'
 import { isGameResult } from '../../src/lib/scores'
@@ -22,7 +22,7 @@ describe('source-backed estate challenges', () => {
       expect(new Set(sourceIds).size).toBe(sourceIds.length)
       expect(challenge.requiredEvidence.every((id) => sourceIds.includes(id))).toBe(true)
       expect(challenge.correctIds.every((id) => challenge.options.some((option) => option.id === id))).toBe(true)
-      expect(scoreChallenge(challenge, challenge.correctIds, challenge.requiredEvidence, 12_000)).toMatchObject({ score: 100, perfect: true })
+      expect(scoreChallenge(challenge, challenge.correctIds, challenge.requiredEvidence)).toMatchObject({ score: 100, perfect: true })
       const prompt = challengePrompt(challenge)
       for (const id of sourceIds) expect(prompt).toContain(`[${id}]`)
       expect(prompt).toContain('synthetic')
@@ -33,24 +33,31 @@ describe('source-backed estate challenges', () => {
   it('requires the current tenants, not historical or neighbouring units', () => {
     const challenge = challenges[0]!
     expect(challenge.correctIds).toEqual(['A', 'B', 'C'])
-    expect(scoreChallenge(challenge, ['A', 'B', 'C', 'D'], challenge.requiredEvidence, 5000).perfect).toBe(false)
-    expect(scoreChallenge(challenge, ['A', 'B', 'C', 'D', 'E'], challenge.requiredEvidence, 5000).score).toBeLessThan(100)
+    expect(scoreChallenge(challenge, ['A', 'B', 'C', 'D'], challenge.requiredEvidence).perfect).toBe(false)
+    expect(scoreChallenge(challenge, ['A', 'B', 'C', 'D', 'E'], challenge.requiredEvidence).score).toBeLessThan(100)
   })
 
   it('requires proof and rejects made-up evidence IDs', () => {
     const challenge = challenges[0]!
-    expect(scoreChallenge(challenge, challenge.correctIds, [], 5000)).toMatchObject({ score: 80, perfect: false, citedCount: 0 })
-    expect(scoreChallenge(challenge, challenge.correctIds, ['made-up:source'], 5000).citedCount).toBe(0)
-    expect(scoreChallenge(challenge, [], challenge.requiredEvidence, 5000).score).toBe(20)
+    expect(scoreChallenge(challenge, challenge.correctIds, [])).toMatchObject({ score: 80, perfect: false, citedCount: 0 })
+    expect(scoreChallenge(challenge, challenge.correctIds, ['made-up:source']).citedCount).toBe(0)
+    expect(scoreChallenge(challenge, [], challenge.requiredEvidence).score).toBe(20)
   })
 
-  it('keeps timeouts and invalid elapsed times out of complete results', () => {
+  it('judges completion from the answer and evidence, without a time parameter', () => {
     const challenge = challenges[1]!
-    for (const elapsed of [-1, ROUND_MS, ROUND_MS + 1000]) {
-      expect(scoreChallenge(challenge, challenge.correctIds, challenge.requiredEvidence, elapsed).perfect).toBe(false)
-    }
-    expect(scoreChallenge(challenge, challenge.correctIds, challenge.requiredEvidence, 5000, true).perfect).toBe(false)
+    expect(scoreChallenge(challenge, challenge.correctIds, challenge.requiredEvidence)).toMatchObject({ score: 100, perfect: true })
+    expect(scoreChallenge(challenge, [], challenge.requiredEvidence).perfect).toBe(false)
     expect(exactSet(['A', 'A'], ['A', 'B'])).toBe(false)
+  })
+
+  it('formats a count-up across minutes and hours without wrapping at one day', () => {
+    expect(formatElapsed(0)).toBe('00:00')
+    expect(formatElapsed(59_999)).toBe('00:59')
+    expect(formatElapsed(60_000)).toBe('01:00')
+    expect(formatElapsed(125_000)).toBe('02:05')
+    expect(formatElapsed(3_661_000)).toBe('1:01:01')
+    expect(formatElapsed(172_801_000)).toBe('48:00:01')
   })
 })
 

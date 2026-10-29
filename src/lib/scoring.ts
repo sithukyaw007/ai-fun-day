@@ -1,13 +1,11 @@
 import type { Challenge, GameResult, PhraseCard } from '../types'
 
-export const ROUND_MS = 60_000
-
 export function exactSet(actual: string[], expected: string[]): boolean {
   const set = new Set(actual)
   return set.size === expected.length && expected.every((value) => set.has(value))
 }
 
-export function scoreChallenge(challenge: Challenge, answers: string[], evidence: string[], elapsedMs: number, timedOut = false) {
+export function scoreChallenge(challenge: Challenge, answers: string[], evidence: string[]) {
   const allowedEvidence = new Set(challenge.files.flatMap((file) => file.rows.map((row) => `${file.id}:${row.id}`)))
   const selected = new Set(answers)
   const correctCount = challenge.correctIds.filter((id) => selected.has(id)).length
@@ -15,11 +13,10 @@ export function scoreChallenge(challenge: Challenge, answers: string[], evidence
   const answerFraction = Math.max(0, (correctCount - wrongCount) / challenge.correctIds.length)
   const citedCount = challenge.requiredEvidence.filter((id) => allowedEvidence.has(id) && evidence.includes(id)).length
   const evidenceFraction = citedCount / challenge.requiredEvidence.length
-  const withinTime = !timedOut && elapsedMs >= 0 && elapsedMs < ROUND_MS
-  const perfect = withinTime && exactSet(answers, challenge.correctIds) && evidenceFraction === 1
+  const perfect = exactSet(answers, challenge.correctIds) && evidenceFraction === 1
   return {
     score: Math.round(answerFraction * 80 + evidenceFraction * 20),
-    perfect, correctCount, wrongCount, citedCount, withinTime,
+    perfect, correctCount, wrongCount, citedCount,
   }
 }
 
@@ -41,6 +38,15 @@ export function compareResults(a: GameResult, b: GameResult): number {
 
 export function formatTime(ms: number): string {
   return `${(Math.max(0, ms) / 1000).toFixed(1)}s`
+}
+
+export function formatElapsed(ms: number): string {
+  const seconds = Math.floor(Math.max(0, ms) / 1000)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  const minutes = Math.floor(seconds / 60)
+  return seconds >= 3600
+    ? `${Math.floor(seconds / 3600)}:${pad(minutes % 60)}:${pad(seconds % 60)}`
+    : `${pad(minutes)}:${pad(seconds % 60)}`
 }
 
 export function attemptId(): string {

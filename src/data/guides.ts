@@ -7,7 +7,7 @@ export interface GuideStep {
 
 export const gameGuides: Record<GameId, { hint: string; steps: GuideStep[] }> = {
   beat: {
-    hint: 'Correct answer + pinned proof. The 60-second clock starts only when you enter the real case.',
+    hint: 'No time limit. The counter counts up only after you enter the case. Correct answers and pinned proof determine your score.',
     steps: [
       { title: 'Explore the evidence.', description: 'Open the file tabs. Follow the service map and check the current tenant cards.' },
       { title: 'Pin your proof.', description: 'Tick Pin evidence on the cards that support your answer. You can pin cards from different files.' },

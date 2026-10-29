@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowRight, CheckCheck, Clock3, Files, RotateCcw, Search, ShieldCheck } from 'lucide-react'
+import { ArrowRight, CheckCheck, Clock3, Files, Infinity as InfinityIcon, RotateCcw, Search, ShieldCheck } from 'lucide-react'
 import { challenges } from '../data/challenges'
 import { GameHeading, LiveHandoff, PersonaNote, ResultBadge, Tag } from '../components/Common'
 import { EvidenceBrowser } from '../components/Evidence'
@@ -7,7 +7,7 @@ import GameScene from '../components/GameScene'
 import { challengePrompt } from '../lib/handoff'
 import { useRoundActivity } from '../lib/hooks'
 import type { GameProps } from '../lib/hooks'
-import { attemptId, formatTime, ROUND_MS, scoreChallenge } from '../lib/scoring'
+import { attemptId, formatElapsed, scoreChallenge } from '../lib/scoring'
 
 type BeatResult = ReturnType<typeof scoreChallenge> & { elapsedMs: number }
 
@@ -26,11 +26,11 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
   const attempt = useRef('')
   useRoundActivity(onActive, phase === 'playing')
 
-  const finish = useCallback((expired = false) => {
+  const finish = useCallback(() => {
     if (finished.current || phase !== 'playing') return
     finished.current = true
     const elapsedMs = performance.now() - started.current
-    const outcome = scoreChallenge(challenge, answers, evidence, elapsedMs, expired)
+    const outcome = scoreChallenge(challenge, answers, evidence)
     setElapsed(elapsedMs)
     setResult({ ...outcome, elapsedMs })
     setPhase('done')
@@ -42,14 +42,10 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
 
   useEffect(() => {
     if (phase !== 'playing') return
-    const tick = () => {
-      const time = performance.now() - started.current
-      setElapsed(time)
-      if (time >= ROUND_MS) finish(true)
-    }
+    const tick = () => setElapsed(performance.now() - started.current)
     const timer = window.setInterval(tick, 100)
     return () => clearInterval(timer)
-  }, [phase, finish])
+  }, [phase])
 
   useEffect(() => {
     const ref = highlighted[0]
@@ -71,11 +67,9 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
   function toggle(value: string, values: string[], setter: (next: string[]) => void) {
     setter(values.includes(value) ? values.filter((item) => item !== value) : [...values, value])
   }
-  const remaining = Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000))
-
   return <section aria-label="Beat the Agent">
-    <GameHeading number="01" title="Beat the Agent" description="Sixty seconds. One messy estate. Your move.">
-      <Tag><Clock3 size={14} />60-second evidence hunt</Tag>
+    <GameHeading number="01" title="Beat the Agent" description="One messy estate. Take your time. Make your call.">
+      <Tag><InfinityIcon size={16} />No time limit</Tag>
     </GameHeading>
 
     {phase === 'ready' ? <>
@@ -88,7 +82,7 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
           <div className="mission-steps">
             <span><Search size={17} />Find the facts</span><ArrowRight size={14} /><span><CheckCheck size={17} />Make the call</span><ArrowRight size={14} /><span><ShieldCheck size={17} />Cite your proof</span>
           </div>
-          <div className="mission-bottom"><span className="giant-number">60<span>seconds</span></span><div><strong>Correct beats quick.</strong><p>A well-sourced answer wins.<br />No rigged AI speed record here.</p></div></div>
+          <div className="mission-bottom"><span className="giant-number"><InfinityIcon size={60} aria-label="Unlimited time" /><span>at your pace</span></span><div><strong>Correct beats quick.</strong><p>No countdown. No automatic timeout.<br />Read, explore, then answer.</p></div></div>
         </div>
         <div className="challenge-picker panel">
           <div className="section-label"><span>CHOOSE YOUR CASE</span><span>4 fictional challenges</span></div>
@@ -107,14 +101,14 @@ export default function BeatAgent({ onResult, onActive, onStart }: GameProps) {
           <div className="mission-hint">{challenge.id === 'ahu' ? 'Asset > units > current tenants' : challenge.id === 'transfer' ? '3 missing items + 1 confirmation' : challenge.id === 'bids' ? 'Eligible + not withdrawn + by 12:00' : '1 Nov 2026 - 30 Apr 2027 / rent owed > $0'}</div>
           <details className="brief-details"><summary>Full mission brief</summary><p>{challenge.context}</p></details>
         </div>
-        <div className={`countdown${remaining <= 10 && phase === 'playing' ? ' urgent' : ''}`}>
-          <Clock3 size={20} /><strong aria-live="off">{phase === 'playing' ? `${remaining}s` : formatTime(elapsed)}</strong><small>{phase === 'playing' ? 'left on the clock' : 'your attempt'}</small>
+        <div className="elapsed-clock" role="group" aria-label="Elapsed time">
+          <Clock3 size={20} /><strong aria-live="off">{formatElapsed(elapsed)}</strong><small>{phase === 'playing' ? 'elapsed · no limit' : 'your attempt'}</small>
         </div>
       </div>
       {phase === 'done' && result && <ResultBadge score={result.score} max={100} perfect={result.perfect}
-        title={result.perfect ? 'Case cracked. Evidence and all.' : !result.withinTime ? 'Time up. Let the evidence talk.' : 'Good hunt. A few clues got away.'}>
+        title={result.perfect ? 'Case cracked. Evidence and all.' : 'Good hunt. A few clues got away.'}>
         <p>{result.correctCount}/{challenge.correctIds.length} correct selections{result.wrongCount ? `, ${result.wrongCount} extra` : ''} · {result.citedCount}/{challenge.requiredEvidence.length} required source rows cited.</p>
-        <p>{result.perfect ? 'Complete and on time. Check the leaderboard and upload status.' : 'Practice score saved. Complete, on-time answers rank first.'}</p>
+        <p>{result.perfect ? 'Complete and source-backed. Check the leaderboard and upload status.' : 'Practice score saved. Complete, source-backed answers rank first.'} Time is only a tie-breaker.</p>
       </ResultBadge>}
       <div className="case-workspace">
         <EvidenceBrowser files={challenge.files} activeId={activeFile} onFile={setActiveFile} selected={evidence}

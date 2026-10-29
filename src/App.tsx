@@ -19,7 +19,7 @@ import type { GameId, PlayerProfile, ResultInput, Route } from './types'
 import { attemptId } from './lib/scoring'
 
 const games: { id: GameId; number: string; icon: LucideIcon; caption: string; badge: string }[] = [
-  { id: 'beat', number: '01', icon: Files, caption: 'Find the facts. Beat the clock.', badge: 'THE MAIN EVENT' },
+  { id: 'beat', number: '01', icon: Files, caption: 'Find the facts. Take your time.', badge: 'THE MAIN EVENT' },
   { id: 'drift', number: '02', icon: Activity, caption: 'Catch it before the tenant calls.', badge: 'QUICK REACTIONS' },
   { id: 'quiz', number: '03', icon: Sparkles, caption: 'Eight claims. Can, or cannot?', badge: 'PLAY ON YOUR PHONE' },
   { id: 'singlish', number: '04', icon: MessageSquareQuote, caption: 'Same meaning. Less lah.', badge: 'SAY IT YOUR WAY' },
@@ -185,7 +185,7 @@ export default function App() {
         <div className="home-heading"><Tag><Grid2X2 size={14} />Pick your kind of clever</Tag><h1>Come for the AI.<br /><span>Stay for the aiyoh.</span></h1><p>A little friendly competition, inspired by a day in a connected estate.<br />No sign-in. No real tenant data. Just you versus the challenge.</p></div>
         <div className="game-gallery">{games.map((game) => <a key={game.id} className={`gallery-card gallery-${game.id}`} href={`#/${game.id}`}>
           <div className="section-label"><span>{game.badge}</span><span>{game.number}</span></div>
-          <div className="gallery-illustration" aria-hidden="true"><game.icon size={72} strokeWidth={1} /><span className="illustration-orbit" /><span className="illustration-note">{game.id === 'beat' ? '60s' : game.id === 'drift' ? '4.5 C' : game.id === 'quiz' ? '8 / 8' : 'lah ->'}</span></div>
+          <div className="gallery-illustration" aria-hidden="true"><game.icon size={72} strokeWidth={1} /><span className="illustration-orbit" /><span className="illustration-note">{game.id === 'beat' ? 'No limit' : game.id === 'drift' ? '4.5 C' : game.id === 'quiz' ? '8 / 8' : 'lah ->'}</span></div>
           <h2>{gameNames[game.id]}</h2><p>{game.caption}</p><span className="gallery-cta">Let's play<ArrowRight size={18} /></span>
         </a>)}</div>
         <a className="queue-banner" href="#/join"><Smartphone size={25} /><div><strong>Waiting your turn? Your phone is a game controller.</strong><p>Open the QR display and let the queue play AI or Aiyoh?</p></div><ChevronRight size={22} /></a>
@@ -193,7 +193,7 @@ export default function App() {
       {route === 'host' && <section>
         <div className="game-heading"><div><div className="eyebrow"><BookOpen size={15} /> BOOTH HOST GUIDE</div><h1>Keep the booth flowing.</h1><p>One laptop, one phone, four good conversation starters.</p></div><Tag subtle>No account connection needed</Tag></div>
         <div className="host-grid">
-          <article className="panel host-card"><span className="step-number">01</span><h2>Lead with the evidence hunt.</h2><p>Open Beat the Agent on the laptop. Give the visitor the context, then let them start the clock. Reward a correct, sourced answer, not just speed.</p><a className="text-link" href="#/beat">Open the main game<ArrowRight size={16} /></a></article>
+          <article className="panel host-card"><span className="step-number">01</span><h2>Lead with the evidence hunt.</h2><p>Open Beat the Agent on the laptop. Let the visitor read and explore at their own pace. The counter records elapsed time without a deadline; accuracy and evidence determine the score.</p><a className="text-link" href="#/beat">Open the main game<ArrowRight size={16} /></a></article>
           <article className="panel host-card"><span className="step-number">02</span><h2>Let the queue play.</h2><p>Open the Quiz QR page on your phone. Visitors scan it using mobile data and check in independently. Online shared check-ins publish their best scores to the same board.</p><a className="text-link" href="#/join">Show the QR code<ArrowRight size={16} /></a></article>
           <article className="panel host-card"><span className="step-number">03</span><h2>Switch the pace.</h2><p>Use Singlish for a shared laugh, or Spot the Drift for a quick reaction challenge. In the drift game, some rounds are healthy: waiting is a valid move.</p><a className="text-link" href="#/singlish">Try a Singlish phrase<ArrowRight size={16} /></a></article>
           <article className="panel host-card"><span className="step-number">04</span><h2>Bring it back to the story.</h2><p>Mei checks records and drafts notices. Chloe spots emerging facilities issues. Connected information helps both; the officer still decides.</p><span className="host-close">"The officer decides. Copilot did the legwork."</span></article>

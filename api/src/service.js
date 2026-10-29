@@ -30,9 +30,9 @@ export function validateScore(input) {
     || typeof id !== 'string' || !uuid.test(id)
     || typeof game !== 'string' || !Object.hasOwn(variants, game) || !variants[game].includes(variant) || maxScore !== maximums[game]
     || !Number.isInteger(score) || score < 0 || score > maxScore || typeof perfect !== 'boolean'
-    || (elapsedMs !== undefined && (!Number.isFinite(elapsedMs) || elapsedMs < 0 || elapsedMs > 86_400_000))
+    || (elapsedMs !== undefined && (!Number.isFinite(elapsedMs) || elapsedMs < 0 || (game !== 'beat' && elapsedMs > 86_400_000)))
     || (game !== 'singlish' && elapsedMs === undefined)
-    || (game === 'beat' && perfect && (score !== 100 || elapsedMs >= 60_000))
+    || (game === 'beat' && perfect && score !== 100)
     || (['quiz', 'singlish'].includes(game) && perfect !== (score === maxScore))
     || (game === 'drift' && perfect && score < 200)) {
     throw new RequestError(400, 'Invalid game, score or elapsed time.')

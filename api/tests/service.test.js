@@ -56,3 +56,20 @@ test('identities, maxima, variants and expired tokens cannot be forged', async (
   now += 86_400_001
   await assert.rejects(service.submit(score(8), 'Bearer ' + player.token), { status: 401 })
 })
+
+test('Beat accepts complete results after a minute or a day without a scoring deadline', async () => {
+  const service = createService(memoryStore())
+  const player = await service.join({ nickname: 'TakeYourTime' })
+  for (const elapsedMs of [60_000, 125_000, 172_800_000]) {
+    const input = { id: randomUUID(), game: 'beat', variant: 'ahu', score: 100, maxScore: 100, perfect: true, elapsedMs }
+    assert.deepEqual(validateScore(input), input)
+  }
+  const long = { id: randomUUID(), game: 'beat', variant: 'ahu', score: 100, maxScore: 100, perfect: true, elapsedMs: 125_000 }
+  await service.submit(long, 'Bearer ' + player.token)
+  const board = await service.list()
+  assert.equal(board.results[0].perfect, true)
+  assert.equal(board.results[0].elapsedMs, 125_000)
+  for (const elapsedMs of [-1, Infinity, NaN]) assert.throws(() => validateScore({ ...long, elapsedMs }), { status: 400 })
+  assert.throws(() => validateScore({ ...long, score: 99 }), { status: 400 })
+  assert.throws(() => validateScore({ ...score(8), elapsedMs: 172_800_000 }), { status: 400 })
+})

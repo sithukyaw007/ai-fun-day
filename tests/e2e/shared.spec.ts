@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import type { Browser, Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { createService } from '../../api/src/service.js'
+import { challenges } from '../../src/data/challenges'
 
 function store() {
   const rows = new Map()
@@ -149,5 +150,38 @@ test('the connected shared board preserves the laptop start button and phone lay
   expect(start!.y + start!.height).toBeLessThan(768)
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await context.close()
+})
+
+test('a complete Beat attempt after 60 seconds is accepted by the shared board', async ({ browser }) => {
+  const fixture = await setup(browser)
+  const { page, context } = await fixture.device()
+  await page.clock.install()
+  await page.goto('https://booth.test/')
+  await page.getByRole('button', { name: 'Open the case. Start the clock.' }).click()
+  await page.getByLabel('Name or nickname (optional)').fill('PatientPilot')
+  await page.getByRole('button', { name: 'Join shared leaderboard', exact: true }).click()
+  await page.getByRole('button', { name: 'Skip guide', exact: true }).click()
+  await expect(page.locator('.elapsed-clock strong')).toHaveText('00:00')
+  await page.clock.fastForward(125_000)
+  await expect(page.locator('.elapsed-clock strong')).toHaveText('02:05')
+  expect((await fixture.service.list()).results).toHaveLength(0)
+  const challenge = challenges[0]!
+  for (const id of challenge.correctIds) await page.getByLabel(`Tenant ${id}`, { exact: true }).check()
+  for (const file of challenge.files) {
+    const refs = challenge.requiredEvidence.filter((ref) => ref.startsWith(`${file.id}:`))
+    if (!refs.length) continue
+    await page.getByRole('tab', { name: file.title }).click()
+    for (const ref of refs) await page.getByRole('checkbox', { name: `Cite ${ref}`, exact: true }).check()
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: 'test-results/beat-countup-phone.png', fullPage: true })
+  await page.getByRole('button', { name: 'Lock in my answer', exact: true }).click()
+  await expect.poll(async () => (await fixture.service.list()).results.length).toBe(1)
+  expect((await fixture.service.list()).results[0]).toMatchObject({ game: 'beat', perfect: true, score: 100 })
+  expect((await fixture.service.list()).results[0].elapsedMs).toBeGreaterThanOrEqual(125_000)
+  await page.getByRole('link', { name: 'View leaderboard', exact: true }).click()
+  await expect(page.getByRole('cell', { name: 'PatientPilot', exact: true })).toBeVisible()
   await context.close()
 })

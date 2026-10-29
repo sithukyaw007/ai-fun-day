@@ -18,7 +18,7 @@ Four browser games for the Microsoft booth at JTC AI & Analytics Day. Fictional 
 
 | Game | How to play | What it demonstrates |
 | --- | --- | --- |
-| **Beat the Agent** | Solve one of four estate cases in 60 seconds. Select the answer and cite supporting rows from an in-app messy folder. | Correct, sourced answers beat fast guesses. Prepared references are explicitly not live AI. |
+| **Beat the Agent** | Solve one of four estate cases at your own pace. The counter counts up with no deadline or automatic timeout. Select the answer and cite supporting rows. | Accuracy and evidence determine points; elapsed time only breaks ties. Prepared references are explicitly not live AI. |
 | **Spot the Drift** | Tap the large on-screen alarm pad with a finger after a sustained threshold crossing. No keyboard needed; space is optional. Ignore single spikes. Healthy rounds reward waiting for all-clear. | Compare your decision with a disclosed three-consecutive-sample detector, not a live AI or building connection. |
 | **AI or Aiyoh?** | Judge eight AI/data claims. Play on a phone through the quiz QR and show the result to the host. | Sources, permissions, data freshness, consent, and human oversight. |
 | **Singlish to Boardroom** | Pick, type, or optionally say a phrase. Choose the professional rewrite that keeps its meaning. | Useful drafting does not invent facts, promises, approvals, or completed work. |
@@ -60,6 +60,12 @@ node scripts/serve-release.mjs
 4. Close with: **"The officer decides. Copilot did the legwork."**
 
 Use the in-app **Host guide & privacy** page for operation and reset instructions. Start a new round between visitors; changing game cancels an unfinished attempt. A hidden tab cancels an active drift round without saving a score.
+
+### Beat the Agent: no time limit
+
+The elapsed counter starts at `00:00` after check-in and the guide. It counts forward, never counts down, and does not submit or end the round automatically. Visitors can read the brief and evidence for as long as needed, then select **Lock in my answer**. The counter stops at submission and resets for the next case.
+
+Scores and complete-answer status depend only on correctness and source citations, not speed. Shared and local leaderboards continue to use elapsed time only to break ties between equally complete, equally scored attempts. Existing scores are preserved; other games' timing is unchanged. Normal shared-player session expiry remains a security boundary, not a game timeout; a local result is always retained if the shared session has expired.
 
 ### Surface Go / touchscreen play
 
